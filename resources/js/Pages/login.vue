@@ -69,11 +69,14 @@ const errorMessage = ref("")
 const submitLicense = async () => {
   loading.value = true
   errorMessage.value = ""
-
+ const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute('content');
   try {
     const res = await http("/api/check-license", {
       method: "POST",
       body: {
+        csrf_token: csrfToken,
         license_key: license.value, // kirim sesuai controller
       }
     })
