@@ -68,3 +68,9 @@ export async function getChapterDetail(bookId)
 
     
 }
+
+export async function getPlayerVideo(bookId,episode)
+{
+    const service = getService();
+    return await http(`/api/v1/${service}/play/${bookId}/${episode}`);
+}

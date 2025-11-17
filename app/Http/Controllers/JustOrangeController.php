@@ -37,7 +37,10 @@ class JustOrangeController extends Controller
 
     public function moviePlay(Request $request):\Inertia\Response
     {
-        return Inertia::render('video');
+        $prop['bookId'] = $request->bookId;
+        $prop['episode'] = $request->episode;
+        $data['prop'] = $prop;
+        return Inertia::render('video' ,$data );
     }
     public function blankPage(Request $request)
     {

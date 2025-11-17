@@ -29,6 +29,7 @@ Route::group(['prefix' => '/v1/{service}'] , function(){
     Route::get('/categories',[MovieServiceController::class,'getCategory']);
     Route::get('/detail/recommend/{bookId}',[MovieServiceController::class , 'getChapterDetail']);
     Route::get('/detail/{bookId}',[MovieServiceController::class, 'getTheaterDetail']);
+    Route::get('/play/{bookId}/{episode}',[MovieServiceController::class,'getPlayVideo']);
 });
 
 Route::post('/check-license' , [AuthController::class,'checkLicense'])->middleware('api.session');

@@ -26,4 +26,8 @@ interface MovieServiceInterface
      * @return mixed
      */
     public function getBootData();
+
+    public function getCategory();
+    public function getChapterDetail($bookId);
+    public function getTheaterDetail($bookId);
 }
