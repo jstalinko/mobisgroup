@@ -66,12 +66,17 @@ function getXsrfToken() {
     const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : "";
 }
+
 const submitLicense = async () => {
   loading.value = true
   errorMessage.value = ""
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     ?.getAttribute('content');
+    await fetch("/sanctum/csrf-cookie", {
+    method: "GET",
+    credentials: "include"
+});
   try {
     const res = await http("/api/check-license", {
       method: "POST",
