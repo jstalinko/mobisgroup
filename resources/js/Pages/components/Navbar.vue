@@ -366,7 +366,7 @@ onMounted(() => {
     document.documentElement.setAttribute('data-theme', savedTheme);
   } else {
     // Set default theme
-    setTheme('dark');
+    setTheme('synthwave');
   }
 });
 
