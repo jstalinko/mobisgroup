@@ -62,6 +62,10 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+function getXsrfToken() {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+}
 const submitLicense = async () => {
   loading.value = true
   errorMessage.value = ""
@@ -71,8 +75,9 @@ const submitLicense = async () => {
   try {
     const res = await http("/api/check-license", {
       method: "POST",
+       credentials: "include",
       headers: {
-        'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
+        "X-XSRF-TOKEN": getXsrfToken(),
         'Content-Type': 'application/json'
       },
       body: {
