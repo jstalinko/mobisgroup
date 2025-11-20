@@ -51,7 +51,7 @@ trait ServiceTrait
 
             // Cache hanya jika ada success=true
             if (isset($data['success']) && $data['success'] === true) {
-                $data['cached_at'] = now();
+                $data['cached_at'] = now()->toDateTimeString();
                 Cache::put($cacheKey, $data, $this->cacheTtl);
             }
 
