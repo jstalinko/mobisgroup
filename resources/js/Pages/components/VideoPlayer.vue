@@ -1,367 +1,427 @@
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getPlayerVideo, getChapterDetail, getTheaterDetail } from '../../utils/api';
-
-const videoData = ref({});
-const videoDetail = ref({});
-const episodeDetail = ref({});
-const props = defineProps({ bookId: String, episode: String });
-const isLoading = ref(false);
-
-const currentEpisode = ref(parseInt(props.episode) || 0);
-const videoRef = ref(null);
-const isPlaying = ref(false);
-const showControls = ref(true);
-const controlsTimeout = ref(null);
-const isMobile = ref(false);
-const showEpisodesInDrawer = ref(50);
-
-const currentEpisodeDetail = computed(() => {
-  if (!episodeDetail.value?.list) return null;
-  return episodeDetail.value.list.find(ep => ep.chapterIndex === currentEpisode.value);
-});
-
-const watchButtonText = computed(() => {
-  return currentEpisode.value > 0 ? 'Lanjutkan Menonton' : 'Tonton Sekarang';
-});
-
-const checkMobile = () => {
-  isMobile.value = window.innerWidth < 1024;
-};
-
-onMounted(async () => {
-  isLoading.value = true;
-  
-  try {
-    const [detailRes, videoRes, chapterRes] = await Promise.all([
-      getTheaterDetail(props.bookId),
-      getPlayerVideo(props.bookId, props.episode),
-      getChapterDetail(props.bookId)
-    ]);
-    
-    videoData.value = videoRes?.data || {};
-    videoDetail.value = detailRes?.data || {};
-    episodeDetail.value = chapterRes?.data || {};
-    
-    // Set current episode from video data
-    if (videoData.value.episode !== undefined) {
-      currentEpisode.value = videoData.value.episode;
-    }
-    
-    console.log('Video Data:', videoData.value);
-    console.log('Video Detail:', videoDetail.value);
-    console.log('Episode Detail:', episodeDetail.value);
-  } catch (error) {
-    console.error('Error loading data:', error);
-  } finally {
-    isLoading.value = false;
-  }
-
-  checkMobile();
-  window.addEventListener('resize', checkMobile);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile);
-  if (controlsTimeout.value) clearTimeout(controlsTimeout.value);
-});
-
-const resetControlsTimeout = () => {
-  if (controlsTimeout.value) clearTimeout(controlsTimeout.value);
-
-  controlsTimeout.value = setTimeout(() => {
-    if (isPlaying.value) showControls.value = false;
-  }, 3000);
-};
-
-const handleMouseMove = () => {
-  showControls.value = true;
-  resetControlsTimeout();
-};
-
-const handleVideoClick = (e) => {
-  if (e.target.tagName === 'BUTTON' || e.target.tagName === 'I') return;
-  togglePlay();
-};
-
-const togglePlay = async () => {
-  if (!videoRef.value) return;
-
-  try {
-    if (videoRef.value.paused) {
-      await videoRef.value.play();
-    } else {
-      videoRef.value.pause();
-    }
-  } catch (err) {
-    console.warn("Play blocked:", err);
-  }
-
-  showControls.value = true;
-  resetControlsTimeout();
-};
-
-const toggleFullscreen = () => {
-  const vid = videoRef.value;
-  if (!vid) return;
-
-  if (vid.requestFullscreen) vid.requestFullscreen();
-  else if (vid.webkitRequestFullscreen) vid.webkitRequestFullscreen();
-  else if (vid.mozRequestFullScreen) vid.mozRequestFullScreen();
-};
-
-const playEpisode = async (epIndex) => {
-  currentEpisode.value = epIndex;
-
-  const drawer = document.getElementById('episode_drawer_player');
-  if (drawer) drawer.close();
-
-  // Reload video data for new episode
-  try {
-    const videoRes = await getPlayerVideo(props.bookId, epIndex.toString());
-    videoData.value = videoRes?.data || {};
-    
-    if (!videoRef.value) return;
-
-    videoRef.value.pause();
-    videoRef.value.load();
-
-    setTimeout(async () => {
-      try {
-        await videoRef.value.play();
-      } catch {}
-    }, 150);
-  } catch (error) {
-    console.error('Error loading episode:', error);
-  }
-};
-
-const openEpisodeDrawer = () => {
-  const drawer = document.getElementById('episode_drawer_player');
-  if (drawer) drawer.showModal();
-};
-
-const closeEpisodeDrawer = () => {
-  const drawer = document.getElementById('episode_drawer_player');
-  if (drawer) drawer.close();
-};
-
-const loadMoreEpisodesInDrawer = () => {
-  showEpisodesInDrawer.value += 50;
-};
-</script>
-
 <template>
-  <div class="bg-base-100 min-h-screen">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-screen">
-      <span class="loading loading-spinner loading-lg"></span>
-    </div>
-
-    <template v-else>
-      <!-- Mobile Header -->
-      <div 
-        v-if="isMobile" 
-        v-show="showControls || !isPlaying"
-        class="bg-black/30 backdrop-blur-md text-white p-4 flex items-center justify-between fixed top-0 left-0 right-0 z-30 transition-opacity duration-300"
-        :class="{ 'opacity-0': !showControls && isPlaying }"
-      >
-        <a href="#" class="btn btn-ghost btn-circle btn-sm">
-          <i class="mdi mdi-arrow-left text-xl"></i>
-        </a>
-        <span class="font-bold truncate max-w-[60%]">{{ videoDetail.bookName || 'No Title' }}</span>
-        <span>EP.{{ currentEpisode + 1 }}</span>
-      </div>
-
-      <div class="max-w-7xl mx-auto lg:p-4">
-        <div class="flex flex-col lg:flex-row lg:gap-4">
-
-          <!-- Video Player -->
-          <div class="flex-grow lg:w-3/4">
-            <div 
-              :class="[
-                'relative bg-black',
-                isMobile ? 'h-screen w-screen fixed top-0 left-0 z-20' : 'aspect-video rounded-lg overflow-hidden'
-              ]"
-              @click="handleVideoClick"
-              @mousemove="handleMouseMove"
-              @touchstart="handleMouseMove"
-            >
-
-              <!-- VIDEO ELEMENT -->
-              <video
-                ref="videoRef"
-                class="w-full h-full object-contain"
-                @play="isPlaying = true"
-                @pause="isPlaying = false"
-                preload="metadata"
-                playsinline
-                webkit-playsinline
-                x5-playsinline
-              >
-                <source :src="videoData.streamUrl" type="video/mp4">
-                Browser Anda tidak mendukung video tag.
-              </video>
-
-              <!-- PLAY BUTTON -->
-              <div 
-                v-show="showControls || !isPlaying"
-                class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300"
-                :class="{ 'opacity-0': !showControls && isPlaying }"
-              >
-                <button 
-                  @click="togglePlay"
-                  class="btn btn-circle btn-ghost text-white text-6xl opacity-80 pointer-events-auto"
-                >
-                  <i :class="['mdi', isPlaying ? 'mdi-pause-circle-outline' : 'mdi-play-circle-outline']"></i>
-                </button>
+  <div class="video-player-container">
+   
+    
+    <!-- Desktop View -->
+    <div class="hidden lg:block min-h-screen bg-base-200">
+      <div class="container mx-auto p-4">
+        <!-- Video Area -->
+        <div class="bg-black rounded-lg overflow-hidden mb-4">
+          <div class="relative aspect-video">
+            <video
+              ref="videoPlayer"
+              :src="currentVideoUrl"
+              class="w-full h-full object-contain"
+              controls
+              @ended="nextEpisode"
+            ></video>
+            
+            <!-- Quality Selector -->
+            <div class="absolute top-4 right-4">
+              <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-sm btn-circle btn-ghost bg-black/50 text-white">
+                  <span class="mdi mdi-cog text-xl"></span>
+                </label>
+                <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-32 mt-2">
+                  <li v-for="url in currentEpisode?.video_urls" :key="url.quality">
+                    <a @click="changeQuality(url.url)" :class="{ 'active': currentVideoUrl === url.url }">
+                      {{ url.quality }}p
+                    </a>
+                  </li>
+                </ul>
               </div>
-
-              <!-- MOBILE CONTROLS -->
-              <div 
-                v-if="isMobile"
-                v-show="showControls || !isPlaying"
-                class="absolute right-4 bottom-20 flex flex-col gap-3 z-10 transition-opacity duration-300"
-                :class="{ 'opacity-0': !showControls && isPlaying }"
-              >
-                <button @click="toggleFullscreen" class="btn btn-circle btn-sm bg-black/70 text-white border-0">
-                  <i class="mdi mdi-fullscreen"></i>
-                </button>
-
-                <button @click="openEpisodeDrawer" class="btn btn-circle btn-sm bg-black/70 text-white border-0">
-                  <i class="mdi mdi-format-list-bulleted"></i>
-                </button>
-              </div>
-
-              <!-- DESKTOP CONTROLS -->
-              <div 
-                v-if="!isMobile"
-                v-show="showControls || !isPlaying"
-                class="absolute right-4 bottom-4 flex gap-2 z-10 transition-opacity duration-300"
-                :class="{ 'opacity-0': !showControls && isPlaying }"
-              >
-                <button @click="toggleFullscreen" class="btn btn-circle btn-sm bg-black/70 text-white border-0">
-                  <i class="mdi mdi-fullscreen"></i>
-                </button>
-              </div>
-
-            </div>
-
-            <!-- EPISODE INFO DESKTOP -->
-            <div v-if="!isMobile" class="p-4 bg-base-300 rounded-b-lg">
-              <h2 class="text-xl font-bold mt-2">
-                {{ videoDetail.bookName }} - Episode {{ currentEpisode + 1 }}
-              </h2>
-
-              <div class="flex items-center gap-4 text-sm opacity-80 mt-2">
-                <span class="flex items-center gap-1">
-                  <i class="mdi mdi-quality-high"></i> {{ videoData.quality }}p
-                </span>
-                <span v-if="videoData.availableQualities" class="flex items-center gap-1">
-                  <i class="mdi mdi-video-box"></i> {{ videoData.availableQualities.join(', ') }}p
-                </span>
-              </div>
-
-              <p v-if="videoDetail.introduction" class="mt-4 text-sm">
-                {{ videoDetail.introduction }}
-              </p>
-
-              <div v-if="videoDetail.tags" class="flex flex-wrap gap-2 mt-4">
-                <div v-for="tag in videoDetail.tags" :key="tag" class="badge badge-outline">
-                  {{ tag }}
-                </div>
-              </div>
-
-              <div class="flex items-center gap-4 mt-6">
-                <button @click="togglePlay" class="btn btn-primary btn-lg">
-                  <i class="mdi mdi-play"></i>
-                  {{ watchButtonText }}
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- SIDEBAR DESKTOP -->
-          <div v-if="episodeDetail.list" class="hidden lg:block w-1/4 bg-base-300 p-4 rounded-lg overflow-y-auto max-h-[calc(100vh-8rem)] custom-scrollbar">
-            <h3 class="font-bold text-lg mb-4 sticky top-0 bg-base-300 z-10 pb-2">
-              Episode ({{ currentEpisode + 1 }}/{{ videoDetail.chapterCount || episodeDetail.list.length }})
-            </h3>
-
-            <div class="grid grid-cols-4 gap-2">
-              <button 
-                v-for="ep in episodeDetail.list" 
-                :key="ep.chapterIndex"
-                @click="playEpisode(ep.chapterIndex)"
-                :class="['btn btn-outline btn-sm', { 'btn-primary': ep.chapterIndex === currentEpisode }]"
-              >
-                {{ ep.chapterIndex + 1 }}
-              </button>
             </div>
           </div>
-
         </div>
-      </div>
 
-      <!-- MOBILE DRAWER EPISODE -->
-      <dialog id="episode_drawer_player" class="modal modal-bottom">
-        <div class="modal-box max-h-[80vh] bg-base-300 rounded-t-2xl">
-          <div class="flex justify-between items-center pb-4 border-b border-base-content/10">
-            <h3 class="font-bold text-lg">
-              Episode ({{ currentEpisode + 1 }}/{{ videoDetail.chapterCount || episodeDetail?.list?.length || 0 }})
-            </h3>
+        <!-- Navigation Buttons -->
+        <div class="flex gap-2 mb-4">
+          <button 
+            @click="previousEpisode" 
+            :disabled="currentIndex === 0"
+            class="btn btn-primary"
+          >
+            <span class="mdi mdi-chevron-left text-xl"></span>
+            Sebelumnya
+          </button>
+          <button 
+            @click="nextEpisode" 
+            :disabled="currentIndex === episodes.length - 1"
+            class="btn btn-primary"
+          >
+            Selanjutnya
+            <span class="mdi mdi-chevron-right text-xl"></span>
+          </button>
+        </div>
 
-            <button @click="closeEpisodeDrawer" class="btn btn-sm btn-circle btn-ghost">
-              <i class="mdi mdi-close text-xl"></i>
+        <!-- Video Info -->
+        <div class="bg-base-100 rounded-lg p-6 mb-4">
+          <h1 class="text-2xl font-bold mb-2">{{ currentEpisode?.title }}</h1>
+          <p class="text-base-content/70 mb-4">{{ currentEpisode?.description }}</p>
+          
+          <!-- Share Buttons -->
+          <div class="flex gap-2">
+            <button @click="shareToWhatsApp" class="btn btn-sm btn-success gap-2">
+              <span class="mdi mdi-whatsapp text-lg"></span>
+              WhatsApp
+            </button>
+            <button @click="shareToFacebook" class="btn btn-sm btn-info gap-2">
+              <span class="mdi mdi-facebook text-lg"></span>
+              Facebook
+            </button>
+            <button @click="shareToTwitter" class="btn btn-sm gap-2">
+              <span class="mdi mdi-twitter text-lg"></span>
+              Twitter
+            </button>
+            <button @click="copyLink" class="btn btn-sm btn-ghost gap-2">
+              <span class="mdi mdi-content-copy text-lg"></span>
+              Copy Link
             </button>
           </div>
-
-          <div v-if="episodeDetail.list" class="overflow-y-auto mt-4">
-            <div class="grid grid-cols-5 gap-2">
-              <button 
-                v-for="ep in episodeDetail.list.slice(0, showEpisodesInDrawer)" 
-                :key="ep.chapterIndex"
-                @click="playEpisode(ep.chapterIndex)"
-                :class="['btn btn-outline btn-sm', { 'btn-primary': ep.chapterIndex === currentEpisode }]"
-              >
-                {{ ep.chapterIndex + 1 }}
-              </button>
-            </div>
-
-            <div v-if="showEpisodesInDrawer < episodeDetail.list.length" class="text-center mt-4">
-              <button @click="loadMoreEpisodesInDrawer" class="btn btn-ghost text-primary w-full">
-                Lihat lebih banyak
-              </button>
-            </div>
-          </div>
-
         </div>
 
-        <button @click="closeEpisodeDrawer" class="modal-backdrop">Close</button>
-      </dialog>
-    </template>
+        <!-- Episodes Grid -->
+        <div class="bg-base-100 rounded-lg p-6">
+          <h2 class="text-xl font-bold mb-4">Episode List</h2>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="(ep, index) in episodes"
+              :key="ep.id"
+              @click="selectEpisode(index)"
+              class="btn btn-sm min-w-[44px] h-11 font-semibold"
+              :class="{ 'btn-primary': currentIndex === index, 'btn-outline btn-ghost': currentIndex !== index }"
+            >
+              {{ index + 1 }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Mobile View -->
+    <div class="lg:hidden relative h-screen overflow-hidden bg-black">
+      <div 
+        ref="mobileContainer"
+        class="snap-y snap-mandatory h-full overflow-y-scroll"
+        @scroll="handleMobileScroll"
+      >
+        <div
+          v-for="(episode, index) in episodes"
+          :key="episode.id"
+          class="snap-start h-screen flex items-center justify-center relative"
+        >
+          <video
+            :ref="el => { if (el) videoRefs[index] = el }"
+            :src="getDefaultVideoUrl(episode)"
+            class="w-full h-full object-cover"
+            :controls="currentIndex === index"
+            :autoplay="currentIndex === index"
+            loop
+            playsinline
+          ></video>
+
+          <!-- Episode Info Overlay -->
+          <div class="absolute bottom-20 left-4 right-4 text-white">
+            <h2 class="text-xl font-bold mb-1">{{dramaDetail.title}} - {{ episode.title }}</h2>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Buttons -->
+      <div class="fixed right-4 bottom-32 flex flex-col gap-3 z-10">
+
+  <!-- Episode List Button -->
+  <button 
+    @click="openEpisodeDrawer"
+    class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
+  >
+    <span class="mdi mdi-format-list-numbered text-white text-2xl"></span>
+  </button>
+
+  <!-- Quality Button -->
+  <button 
+    @click="openQualityDrawer"
+    class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
+  >
+    <span class="mdi mdi-cog text-white text-2xl"></span>
+  </button>
+
+</div>
+
+
+      <!-- Episode Drawer -->
+    <div class="drawer drawer-end">
+
+  <!-- Drawer toggle -->
+  <input id="episode-drawer" type="checkbox" class="drawer-toggle" v-model="isEpisodeDrawerOpen" />
+
+  <div class="drawer-side z-20">
+    <label for="episode-drawer" class="drawer-overlay"></label>
+
+    <div class="w-full h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-t-3xl shadow-xl">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 border-b border-white/20">
+        <!-- Close Button -->
+        <label 
+          for="episode-drawer"
+          class="btn btn-sm btn-circle bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30"
+        >
+          <span class="mdi mdi-close text-white text-xl"></span>
+        </label>
+
+        <h3 class="text-lg font-bold text-white">Pilih Episode</h3>
+
+        <!-- Dummy element biar title center -->
+        <div class="w-8"></div>
+      </div>
+
+      <!-- Episode List -->
+      <div class="menu p-4">
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="(ep, index) in episodes"
+            :key="ep.id"
+            @click="selectEpisodeMobile(index)"
+            class="btn btn-sm min-w-[44px] h-11 font-semibold"
+            :class="{ 
+              'btn-primary': currentIndex === index, 
+              'btn-outline btn-ghost text-white border-white/30': currentIndex !== index 
+            }"
+          >
+            {{ index + 1 }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+     <!-- Quality Drawer -->
+<div class="drawer drawer-end">
+  <input id="quality-drawer" type="checkbox" class="drawer-toggle" v-model="isQualityDrawerOpen" />
+
+  <div class="drawer-side z-20">
+    <label for="quality-drawer" class="drawer-overlay"></label>
+
+    <div class="w-80 h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-t-3xl shadow-xl">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 border-b border-white/20">
+        <label 
+          for="quality-drawer"
+          class="btn btn-sm btn-circle bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30"
+        >
+          <span class="mdi mdi-close text-white text-xl"></span>
+        </label>
+
+        <h3 class="text-lg font-bold text-white">Pilih Kualitas Video</h3>
+
+        <div class="w-8"></div>
+      </div>
+
+      <!-- Content -->
+      <div class="menu p-4">
+        <div class="flex flex-col gap-2">
+          <button
+            v-for="url in currentEpisode?.video_urls"
+            :key="url.quality"
+            @click="changeQualityMobile(url.url)"
+            class="btn btn-outline text-white border-white/40 hover:bg-white/20"
+            :class="{ 
+              'btn-active bg-white/30 text-black border-white': currentVideoUrl === url.url 
+            }"
+          >
+            {{ url.quality }}p
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+    </div>
   </div>
 </template>
 
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/api';
+
+const props = defineProps({bookId:String,episode:String});
+const episodes = ref([]);
+const dramaDetail = ref([]);
+const currentIndex = ref(0);
+const currentVideoUrl = ref('');
+const videoPlayer = ref(null);
+const mobileContainer = ref(null);
+const videoRefs = ref([]);
+const isEpisodeDrawerOpen = ref(false);
+const isQualityDrawerOpen = ref(false);
+const scrollTimeout = ref(null);
+
+const currentEpisode = computed(() => episodes.value[currentIndex.value]);
+
+const getDefaultVideoUrl = (episode) => {
+  const defaultVideo = episode?.video_urls?.find(v => v.is_default);
+  return defaultVideo ? defaultVideo.url : episode?.video_urls[0].url;
+};
+
+const selectEpisode = (index) => {
+  currentIndex.value = index;
+  currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+};
+
+const selectEpisodeMobile = (index) => {
+  currentIndex.value = index;
+  currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+  isEpisodeDrawerOpen.value = false;
+  
+  // Scroll to episode
+  const container = mobileContainer.value;
+  if (container) {
+    container.scrollTo({
+      top: index * window.innerHeight,
+      behavior: 'smooth'
+    });
+  }
+};
+
+const nextEpisode = () => {
+  if (currentIndex.value < episodes.value.length - 1) {
+    selectEpisode(currentIndex.value + 1);
+  }
+};
+
+const previousEpisode = () => {
+  if (currentIndex.value > 0) {
+    selectEpisode(currentIndex.value - 1);
+  }
+};
+
+const changeQuality = (url) => {
+  const currentTime = videoPlayer.value?.currentTime || 0;
+  currentVideoUrl.value = url;
+  setTimeout(() => {
+    if (videoPlayer.value) {
+      videoPlayer.value.currentTime = currentTime;
+      videoPlayer.value.play();
+    }
+  }, 100);
+};
+
+const changeQualityMobile = (url) => {
+  const currentVideo = videoRefs.value[currentIndex.value];
+  const currentTime = currentVideo?.currentTime || 0;
+  currentVideoUrl.value = url;
+  isQualityDrawerOpen.value = false;
+  
+  setTimeout(() => {
+    if (currentVideo) {
+      currentVideo.src = url;
+      currentVideo.currentTime = currentTime;
+      currentVideo.play();
+    }
+  }, 100);
+};
+
+const handleMobileScroll = (e) => {
+  if (scrollTimeout.value) {
+    clearTimeout(scrollTimeout.value);
+  }
+
+  scrollTimeout.value = setTimeout(() => {
+    const container = e.target;
+    const scrollTop = container.scrollTop;
+    const newIndex = Math.round(scrollTop / window.innerHeight);
+    
+    if (newIndex !== currentIndex.value && newIndex >= 0 && newIndex < episodes.value.length) {
+      currentIndex.value = newIndex;
+      currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+      
+      // Play current video, pause others
+      videoRefs.value.forEach((video, idx) => {
+        if (video) {
+          if (idx === newIndex) {
+            video.play();
+          } else {
+            video.pause();
+          }
+        }
+      });
+    }
+  }, 150);
+};
+
+const openEpisodeDrawer = () => {
+  isEpisodeDrawerOpen.value = true;
+};
+
+const openQualityDrawer = () => {
+  isQualityDrawerOpen.value = true;
+};
+
+const shareToWhatsApp = () => {
+  const text = `${currentEpisode.value.title} - ${currentEpisode.value.description}`;
+  const url = window.location.href;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+};
+
+const shareToFacebook = () => {
+  const url = window.location.href;
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+};
+
+const shareToTwitter = () => {
+  const text = `${currentEpisode.value.title} - ${currentEpisode.value.description}`;
+  const url = window.location.href;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+};
+
+const copyLink = () => {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    alert('Link berhasil disalin!');
+  });
+};
+
+
+
+onMounted(async () => {
+  let r = await getPlayerVideo(props.bookId,props.episode);
+  let x = await getTheaterDetail(props.bookId);
+  currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+  episodes.value = r?.data;
+  dramaDetail.value = x?.data;
+});
+
+onUnmounted(() => {
+  if (scrollTimeout.value) {
+    clearTimeout(scrollTimeout.value);
+  }
+});
+</script>
+
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+.video-player-container {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #555;
-  border-radius: 20px;
+
+/* Hide scrollbar for mobile snap scroll */
+.snap-y::-webkit-scrollbar {
+  display: none;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-  background-color: transparent;
+
+.snap-y {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-video {
-  transition: all 0.3s ease;
-}
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: -1;
+
+/* Drawer animation */
+.drawer-side > * {
+  transition: transform 0.3s ease-in-out;
 }
 </style>
