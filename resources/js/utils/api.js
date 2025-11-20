@@ -12,6 +12,7 @@ export async function http(url, options = {}) {
         "Accept": "application/json",
         "X-Requested-With": "XMLHttpRequest",
         ...(csrfToken && { "X-CSRF-TOKEN": csrfToken }),
+        ...{"X-XSRF-TOKEN": getXsrfToken()},
         ...(options.body && { "Content-Type": "application/json" }),
 
         // Tambahan otomatis
@@ -37,7 +38,10 @@ export async function http(url, options = {}) {
         return response; // fallback
     }
 }
-
+function getXsrfToken() {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+}
 
 function getService() {
     let service= localStorage.getItem("service_active_app_x") || "dramabox";
