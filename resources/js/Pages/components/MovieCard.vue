@@ -13,6 +13,7 @@
       <!-- Top Badge -->
       <div
         class="absolute top-1 right-1 md:top-2 md:right-2 badge badge-success badge-xs md:badge-sm gap-1"
+        v-if="item.views!=0 && item.views != '1.0K'"
       >
         <span class="mdi mdi-eye"></span>
         {{ item.views }}
@@ -34,8 +35,14 @@
       <div
         class="absolute bottom-2 left-2 bg-black/80 px-2 py-1 rounded text-xs md:text-sm text-white font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center gap-1"
       >
+      <span v-if="item.episode==0">
+        <span class="mdi mdi-tags"></span>
+        {{ item.tags.join(",") }}
+      </span>
+      <span v-else>
         <span class="mdi mdi-television-play"></span>
         {{ item.episode }} Eps
+        </span>
       </div>
     </figure>
 

@@ -2,12 +2,6 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Client;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
-use App\Interfaces\MovieServiceInterface;
-use GuzzleHttp\Exception\RequestException;
 
 class DramaboxService
 {
