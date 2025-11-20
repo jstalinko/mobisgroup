@@ -44,7 +44,7 @@ class JustOrangeController extends Controller
     }
     public function search(Request $request)
     {
-        $query= $request->input('query');
+        $query= $request->get('query');
         if(!$query) return abort(404);
         $prop['query'] = $query;
         $data['prop'] = $prop;
