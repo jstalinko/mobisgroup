@@ -20,8 +20,14 @@ use App\Http\Controllers\JustOrangeController;
 Route::get('/', action: [JustOrangeController::class , 'index']);
 Route::get('/detail/{bookId}/{slug}',[JustOrangeController::class,'movieDetail'])->middleware(['auth','subscription']);
 Route::get('/play/{bookId}/{episode}/{slug}',[JustOrangeController::class,'moviePlay'])->middleware(['auth','subscription']);
+Route::get('/search',[JustOrangeController::class,'search']);
 Route::get('/login',[AuthController::class,'loginPage'])->name('login');
 Route::get('/get-license',[AuthController::class , 'licensePage'])->name('license');
+Route::get('/logout',function(){
+    auth()->logout();
+    @session_destroy();
+    return redirect('/');
+});
 Route::get('/plan', action: fn() => Inertia::render('plan'))->name('plan');
 Route::get('/blank/{id}',[JustOrangeController::class,'blankPage'] );
 Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonService']);

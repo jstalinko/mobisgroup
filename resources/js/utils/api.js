@@ -40,15 +40,31 @@ export async function http(url, options = {}) {
 
 
 function getService() {
-    return localStorage.getItem("service_active_app_x") || "dramabox";
+    let service= localStorage.getItem("service_active_app_x") || "dramabox";
+       service = service
+        .trim()                // hapus spasi depan/belakang
+        .replace(/['"]/g, '')  // hapus " dan '
+        .replace(/%22|%20/g, ''); // hapus encode quotes & spaces
+    return service;
+}
+function getLang() {
+    let lang = localStorage.getItem('site_lang') || 'in';
+
+    // Bersihkan karakter tidak penting
+    lang = lang
+        .trim()                // hapus spasi depan/belakang
+        .replace(/['"]/g, '')  // hapus " dan '
+        .replace(/%22|%20/g, ''); // hapus encode quotes & spaces
+    
+    return lang;
 }
 export async function getTheater() {
     const service = getService();
-    return await http(`/api/v1/${service}/theaters`);
+    return await http(`/api/v1/${service}/theaters?lang=${getLang()}`);
 }
 export async function getRecommend(page = 1) {
     const service = getService();
-    return await http(`/api/v1/${service}/recommend?page=${page}`);
+    return await http(`/api/v1/${service}/recommend?page=${page}&lang=${getLang()}`);
 }
 export async function getCategory() {
     const service = getService();
@@ -57,14 +73,14 @@ export async function getCategory() {
 export async function getTheaterDetail(bookId)
 {
     const service = getService();
-    return await http(`/api/v1/${service}/detail/${bookId}`);
+    return await http(`/api/v1/${service}/detail/${bookId}?lang=${getLang()}`);
 
     
 }
 export async function getChapterDetail(bookId)
 {
     const service = getService();
-    return await http(`/api/v1/${service}/detail/recommend/${bookId}`);
+    return await http(`/api/v1/${service}/detail/chapter/${bookId}?lang=${getLang()}`);
 
     
 }
@@ -72,5 +88,16 @@ export async function getChapterDetail(bookId)
 export async function getPlayerVideo(bookId,episode)
 {
     const service = getService();
-    return await http(`/api/v1/${service}/play/${bookId}/${episode}`);
+    return await http(`/api/v1/${service}/stream/${bookId}?episode=${episode}`);
+}
+export async function getSearch(query)
+{
+    const service = getService();
+    return await http(`/api/v1/${service}/search` , {
+        method:'POST',
+        body: {
+            query: query
+        }
+    });
+    
 }

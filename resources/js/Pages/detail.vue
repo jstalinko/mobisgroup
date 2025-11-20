@@ -13,16 +13,14 @@
               Home
             </a>
           </li>
-          <li>
-            <a href="/romance" class="flex items-center gap-1">
-              <span class="mdi mdi-heart"></span>
-              Romance
-            </a>
-          </li>
-          <li>{{ detail.bookName }}</li>
+          <li>{{ detail.title }}</li>
         </ul>
       </div>
 
+      <template v-if="isLoading">
+        <DetailSkeleton/>
+      </template>
+      <template v-else>
       <!-- Main Content -->
       <div class="card bg-base-100 shadow-xl mb-8">
         <div class="card-body p-4 md:p-6">
@@ -31,8 +29,8 @@
             <div class="w-full md:w-48 lg:w-56 flex-shrink-0">
               <figure class="relative group">
                 <img 
-                  :src="detail.coverWap" 
-                  :alt="detail.bookName"
+                  :src="detail.image" 
+                  :alt="detail.title"
                   class="w-full rounded-lg aspect-[2/3] object-cover"
                 />
                 <!-- Play Overlay -->
@@ -42,7 +40,7 @@
                   </button>
                 </div>
               </figure>
-              <button class="btn btn-primary w-full gap-2 mt-4" @click="router.visit('/play/'+detail.bookId+'/1/'+slugify(detail.bookName))">
+              <button class="btn btn-primary w-full gap-2 mt-4" @click="router.visit('/play/'+detail.id+'/1/'+slugify(detail.title))">
                 <span class="mdi mdi-play"></span>
                 Play Now
               </button>
@@ -50,10 +48,10 @@
 
             <!-- Info -->
             <div class="flex-1">
-              <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-3">{{ detail.bookName }}</h1>
+              <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-3">{{ detail.title }}</h1>
               
               <div class="flex items-center gap-2 mb-4">
-                <span class="badge badge-lg">{{ detail.chapterCount }} Episodes</span>
+                <span class="badge badge-lg">{{ detail.episode }} Episodes</span>
               </div>
 
               <p class="text-base-content/80 mb-4 leading-relaxed text-sm md:text-base">
@@ -105,9 +103,9 @@
         <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 md:gap-3">
           <div 
             v-for="episode in displayedEpisodes" 
-            :key="episode.chapterIndex"
+            :key="episode.episode"
             class="card bg-base-100 shadow hover:shadow-lg transition-all cursor-pointer group"
-            @click="router.visit('/play/'+detail.bookId+'/'+(episode.chapterIndex+1)+'/'+slugify(detail.bookName))"
+            @click="router.visit('/play/'+detail.id+'/'+(episode.episode+1)+'/'+slugify(detail.title))"
           >
             <div class="card-body p-2 md:p-3 text-center">
               <div class="relative mb-2">
@@ -116,12 +114,12 @@
                
                 <!-- Premium Badge -->
                 <span 
-                  v-if="episode.isCharge"
+                  v-if="episode.isLocked"
                   class="mdi mdi-crown absolute top-0 left-0 text-lg text-warning"
                 ></span>
               </div>
-              <h3 class="font-bold text-xs md:text-sm">{{ detail.bookName }}</h3>
-              <p class="text-xs text-base-content/70">Episode {{ (episode.chapterIndex+1) }}</p>
+              <h3 class="font-bold text-xs md:text-sm">{{ detail.title }}</h3>
+              <p class="text-xs text-base-content/70">Episode {{ (episode.episode+1) }}</p>
             </div>
           </div>
         </div>
@@ -134,6 +132,7 @@
           </button>
         </div>
       </section>
+      </template>
 
 
       <!-- Recommended for you -->
@@ -143,33 +142,12 @@
           Yang mungkin anda suka 
         </h2>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
-          <div 
-            v-for="item in recommended" 
-            :key="item.bookId"
-            class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all cursor-pointer group"
-            @click="router.visit('/detail/'+item.bookId+'/'+slugify(item.bookName))"
-          >
-            <figure class="relative overflow-hidden">
-              <img 
-                :src="item.coverWap" 
-                :alt="item.bookName"
-                class="w-full aspect-[3/4] object-cover group-hover:scale-110 transition-transform duration-300"
-              />
-              <!-- Hover Overlay -->
-              <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <button class="btn btn-circle btn-primary">
-                  <span class="mdi mdi-play text-xl"></span>
-                </button>
-              </div>
-            </figure>
-            <div class="card-body p-3">
-              <h3 class="font-bold text-sm line-clamp-2">{{ item.bookName }}</h3>
-              <div class="flex items-center gap-1 text-xs">
-                <span class="mdi mdi-eye text-orange-400"></span>
-                <span>{{ item.playCount }}</span>
-              </div>
-            </div>
-          </div>
+          <template v-if="isLoading">
+            <MovieCardSkeleton v-for="i in 9"/>
+          </template>
+          <template v-else>
+          <MovieCard v-for="(item,index) in recommended" :key="'recommend-'+index" :item="item"/>
+          </template>
         </div>
       </section>
     </div>
@@ -178,7 +156,7 @@
 
    <Footer/>
   </div>
-  <Loading :show="isLoading"  />
+
 </template>
 
 <script setup>
@@ -190,6 +168,9 @@ import { getChapterDetail , getTheaterDetail } from '../utils/api';
 import { slugify } from '../utils/helpers';
 import Footer from './components/Footer.vue';
 import { router } from '@inertiajs/vue3';
+import MovieCard from './components/MovieCard.vue';
+import MovieCardSkeleton from './components/MovieCardSkeleton.vue';
+import DetailSkeleton from './components/DetailSkeleton.vue';
 const props = defineProps({prop:Object});
 const detail = ref([]);
 const chapters = ref([]);
@@ -220,7 +201,7 @@ let d = await getTheaterDetail(props.prop.bookId);
 let c = await getChapterDetail(props.prop.bookId);
 detail.value = d?.data;
 chapters.value = c?.data;
-episodes.value = c?.data?.list;
+episodes.value = c?.data?.episodes;
 recommended.value = c?.data?.recommendList;
 isLoading.value =false;
 });

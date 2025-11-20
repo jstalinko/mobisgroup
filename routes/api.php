@@ -25,11 +25,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::group(['prefix' => '/v1/{service}'] , function(){
     Route::get('/theaters',[MovieServiceController::class,'getTheater']);
-    Route::get('/recommend',[MovieServiceController::class,'getRecommendMovie']);
-    Route::get('/categories',[MovieServiceController::class,'getCategory']);
-    Route::get('/detail/recommend/{bookId}',[MovieServiceController::class , 'getChapterDetail']);
+    Route::get('/recommend',[MovieServiceController::class,'getRecommend']);
+    Route::get('/categories',action: [MovieServiceController::class,'getCategory']);
+    Route::get('/detail/chapter/{bookId}',[MovieServiceController::class , 'getChapterDetail']);
     Route::get('/detail/{bookId}',[MovieServiceController::class, 'getTheaterDetail']);
-    Route::get('/play/{bookId}/{episode}',[MovieServiceController::class,'getPlayVideo']);
+    Route::get('/stream/{bookId}',[MovieServiceController::class,'getStream']);
+    Route::post('/search',[MovieServiceController::class,'getSearch']);
 });
 
 Route::post('/check-license' , [AuthController::class,'checkLicense'])->middleware('api.session');

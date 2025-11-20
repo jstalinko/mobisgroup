@@ -9,139 +9,41 @@ use Illuminate\Support\Facades\Redis;
 use App\Interfaces\MovieServiceInterface;
 use GuzzleHttp\Exception\RequestException;
 
-class DramaboxService implements MovieServiceInterface
+class DramaboxService
 {
+    use ServiceTrait;
 
-    protected $api_url;
-    public function __construct(){
-        $this->api_url = 'https://dracin.javaradigital.com/api/v1/dramabox';
-    }
- public function http($url, $headers = [], $post = null)
-{
-    $cacheKey = 'http_cache_' . md5($url);
-    
-    // Cek cache Redis hanya untuk GET request
-    if (empty($post)) {
-        $cached = Redis::get($cacheKey);
-        if ($cached) {
-            return json_decode($cached, true);
-        }
-    }
-
-    try {
-        $client = new Client([
-            'proxy'  => \App\Helpers\Dramabox::getProxies(),
-            'verify' => false,
-            'timeout' => 20,
-        ]);
-
-        $options = [
-            'headers' => $headers
-        ];
-
-        if (!empty($post)) {
-            // Jika array → form_params
-            if (is_array($post)) {
-                $options['form_params'] = $post;
-            } else {
-                // Jika string → dianggap JSON body
-                $options['body'] = $post;
-                $options['headers']['Content-Type'] = 'application/json';
-            }
-
-            // POST request
-            $response = $client->post($url, $options);
-        } else {
-            // GET request
-            $response = $client->get($url, $options);
-        }
-
-        $result = [
-            'success' => true,
-            'code'   => $response->getStatusCode(),
-            'body'   => $response->getBody()->getContents()
-        ];
-
-        // Simpan ke Redis hanya untuk GET (expire 1 jam = 3600 detik)
-        if (empty($post)) {
-            Redis::setex($cacheKey, 3600*12, json_encode($result));
-        }
-
-        return $result;
-        
-    } catch (RequestException $e) {
-
-        $error = [
-            'success'  => false,
-            'code'    => $e->getCode(),
-            'message' => $e->getMessage(),
-        ];
-
-        // Cache error selama 5 menit (300 detik)
-        if (empty($post)) {
-            Redis::setex($cacheKey, 300, json_encode($error));
-        }
-
-        return $error;
-    }
-}
-
-    public function getTheater(Request $request)
+    public function __construct()
     {
-         $req = $this->http($this->api_url.'/theaters');
-         if($req['success'])
-         {
-            return json_decode($req['body'],true);
-         }else{
-            return [];
-         }
+        $this->bootService();
     }
 
-    public function getRecommendMovie(Request $request)
+    public function getTheater($lang = 'in')
     {
-        $page = $request->page ?? 1;
-        $req = $this->http($this->api_url.'/recommend/'.$page);
-        if($req['success'])
-        {
-            return json_decode($req['body'],true);
-        }else{
-            return [];
-        }
+        return $this->http('/dramabox/theaters?lang='.$lang , 'GET');
     }
-
-    public function getCategory()
+    public function getRecommend($lang = 'in',$page=1)
     {
-        $req = $this->http($this->api_url.'/categories');
-        if($req['success'])
-        {
-            return json_decode($req['body'],true);
-        }else{
-            return [];
-        }
+        return $this->http('/dramabox/recommend?page='.$page.'&lang='.$lang,'GET');
     }
-
-    public function getChapterDetail($bookId)
+    public function getCategory($lang = 'in',$page= 1)
     {
-        $req = $this->http($this->api_url.'/detail/recommend/'.$bookId);
-        if($req['success'])
-        {
-            return json_decode($req['body'],true);
-        }else{
-            return [];
-        }
+        return $this->http('/dramabox/categories?page='.$page.'&lang='.$lang,'GET');
     }
-    public function getTheaterDetail($bookId)
+    public function getTheaterDetail($lang='in',$bookId)
     {
-        
-        $req = $this->http($this->api_url.'/detail/'.$bookId);
-         if($req['success'])
-        {
-            return json_decode($req['body'],true);
-        }else{
-            return [];
-        }
+        return $this->http('/dramabox/detail/'.$bookId.'?lang='.$lang);
     }
-    
-
-    public function getBootData() {}
+    public function getChapterDetail($lang='in',$bookId)
+    {
+        return $this->http('/dramabox/detail/chapter/'.$bookId.'?lang='.$lang);
+    }
+    public function getStream($lang='in',$bookId)
+    {
+        return $this->http('/dramabox/stream/'.$bookId.'?lang='.$lang);
+    }
+    public function getSearch($lang='in',$query,$page=1)
+    {
+        return $this->http('/dramabox/search?query='.$query.'&page='.$page.'&lang='.$lang);
+    }
 }

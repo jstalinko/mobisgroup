@@ -11,11 +11,6 @@ class JustOrangeController extends Controller
 {
     protected $service;
     
-    public function __construct(MovieServiceInterface $service)
-    {
-        $this->service = $service;
-        
-    }
     public function index(Request $request): \Inertia\Response
     {
         
@@ -46,6 +41,14 @@ class JustOrangeController extends Controller
     {
         $data['meta'] = MetaSetting::find($request->id);
         return view('blank',$data);
+    }
+    public function search(Request $request)
+    {
+        $query= $request->input('query');
+        if(!$query) return abort(404);
+        $prop['query'] = $query;
+        $data['prop'] = $prop;
+        return Inertia::render('search',$data);
     }
 
     public function ComingSoonService(Request $request)
