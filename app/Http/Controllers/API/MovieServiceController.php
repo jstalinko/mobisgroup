@@ -39,8 +39,9 @@ class MovieServiceController extends Controller
     {
         return response()->json([
             'success' => $success,
-            'data' => $data,
+            'data' => $data['data'],
             'status' => $status,
+            'cached_at' => $data['cached_at'] ?? null,
             'timestamp' => now()->toDateTimeString(),
         ], $status, [], JSON_PRETTY_PRINT);
     }
@@ -49,7 +50,7 @@ class MovieServiceController extends Controller
         $data= $this->service->getTheater($this->lang);
         if(isset($data['data']))
         {
-            return $this->send_response($data['data'] , 200,true);
+            return $this->send_response($data , 200,true);
         }else{
             return $this->send_response([] , 500,false);
 
@@ -59,7 +60,7 @@ class MovieServiceController extends Controller
         $data = $this->service->getRecommend($this->lang , $this->pageNo);
         if(isset($data['data']))
         {
-            return $this->send_response($data['data'] , 200,true);
+            return $this->send_response($data , 200,true);
         }else{
             return $this->send_response([] , 500,false);
 
@@ -74,7 +75,7 @@ class MovieServiceController extends Controller
         $data = $this->service->getTheaterDetail($this->lang,$bookId);
         if(isset($data['data']))
         {
-            return $this->send_response($data['data'] , 200,true);
+            return $this->send_response($data , 200,true);
         }else{
             return $this->send_response([] , 500,false);
 
@@ -90,7 +91,7 @@ class MovieServiceController extends Controller
         $data= $this->service->getChapterDetail($this->lang,$bookId);
         if(isset($data['data']))
         {
-            return $this->send_response($data['data'] , 200,true);
+            return $this->send_response($data , 200,true);
         }else{
             return $this->send_response([] , 500,false);
 
@@ -106,7 +107,7 @@ class MovieServiceController extends Controller
         $data = $this->service->getSearch($this->lang,$query,$this->pageNo);
          if(isset($data['data']))
         {
-            return $this->send_response($data['data'] , 200,true);
+            return $this->send_response($data , 200,true);
         }else{
             return $this->send_response([] , 500,false);
 
@@ -119,7 +120,7 @@ class MovieServiceController extends Controller
         $data= $this->service->getStream($this->lang,$bookId);
         if(isset($data['data']))
         {
-            return $this->send_response($data['data'] , 200,true);
+            return $this->send_response($data , 200,true);
         }else{
             return $this->send_response([] , 500,false);
 
