@@ -26,4 +26,5 @@ Route::get('/get-license',[AuthController::class , 'licensePage'])->name('licens
 Route::get('/logout',[AuthController::class,'logout'])->name('logout');
 Route::get('/plan', [JustOrangeController::class,'plan'])->name('plan');
 Route::get('/limit-devices',[JustOrangeController::class,'limitDevices'])->name('limit-devices');
+Route::get('/blocked',[JustOrangeController::class,'blockedPage'])->name('blocked');
 Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonService']);

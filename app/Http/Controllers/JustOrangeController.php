@@ -79,4 +79,8 @@ class JustOrangeController extends Controller
         $data['devices'] = auth()->user()->userDevices()->where('revoked', false)->get();
         return Inertia::render('limit-devices',$data);
     }
+    public function blockedPage()
+    {
+        return Inertia::render('blocked');
+    }
 }
