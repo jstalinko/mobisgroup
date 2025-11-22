@@ -1,96 +1,160 @@
 <template>
-  <!-- Mobile Bottom Navigation -->
-  <div class="btm-nav md:hidden z-50 bg-base-100 border-t border-base-300">
+  <!-- Mobile Bottom Navigation - iOS Style Floating -->
+  <div class="fixed bottom-4 left-4 right-4 md:hidden z-50">
+    <div class="
+      backdrop-blur-xl bg-base-100/70 
+      border border-base-300/50
+      rounded-[20px] 
+      shadow-2xl shadow-black/10
+      px-2 py-1.5
+      flex items-center justify-around
+    ">
 
-    <!-- Home -->
-    <button :class="{'active': activeMenu === 'home'}" @click="router.visit('/')">
-      <span class="mdi mdi-home text-xl"></span>
-      <span class="btm-nav-label text-xs">Home</span>
-    </button>
+      <!-- Home -->
+      <button 
+        :class="{'text-primary scale-110': activeMenu === 'home'}" 
+        @click="router.visit('/')"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
+      >
+        <span class="mdi mdi-home text-xl"></span>
+        <span class="text-[9px] font-medium">Home</span>
+      </button>
 
-    <!-- Search (open modal) -->
-    <button :class="{'active': activeMenu === 'search'}" @click="openSearchModal">
-      <span class="mdi mdi-magnify text-xl"></span>
-      <span class="btm-nav-label text-xs">Cari</span>
-    </button>
+      <!-- Search -->
+      <button 
+        :class="{'text-primary scale-110': activeMenu === 'search'}" 
+        @click="openSearchModal"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
+      >
+        <span class="mdi mdi-magnify text-xl"></span>
+        <span class="text-[9px] font-medium">Cari</span>
+      </button>
 
-    <!-- PLATFORM (DROP-UP CENTER BUTTON) -->
-    <div class="dropdown dropdown-top dropdown-center">
-      <label tabindex="0" class="btn btn-circle btn-primary">
-        <span class="mdi mdi-movie text-xl"></span>
-      </label>
-      <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box w-40 shadow">
-       <li>
-  <button 
-    @click="changePlatform('dramabox')" 
-    :class="{ active: selectedPlatform === 'dramabox' }"
-  >Dramabox</button>
-</li>
+      <!-- PLATFORM (CENTER BUTTON) -->
+      <div class="relative -mt-6">
+        <div class="dropdown dropdown-top">
+          <label 
+            tabindex="0" 
+            class="
+              btn btn-circle
+              bg-gradient-to-br from-primary to-secondary
+              border-4 border-base-100
+              shadow-xl shadow-primary/30
+              hover:scale-105 active:scale-95
+              transition-all duration-200
+              w-14 h-14
+            "
+          >
+            <span class="mdi mdi-movie text-xl text-white"></span>
+          </label>
+          <ul 
+            tabindex="0" 
+            class="
+              dropdown-content menu
+              backdrop-blur-xl bg-base-100/90
+              rounded-[20px]
+              w-44 p-2
+              shadow-2xl shadow-black/20
+              border border-base-300/50
+              mb-3
+            "
+          >
+            <li>
+              <button 
+                @click="changePlatform('dramabox')" 
+                :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'dramabox' }"
+                class="rounded-[14px] transition-all duration-200 hover:scale-105"
+              >
+                <span class="mdi mdi-drama-masks"></span>
+                Dramabox
+              </button>
+            </li>
 
-<li>
-  <button 
-    @click="changePlatform('netshort')" 
-    :class="{ active: selectedPlatform === 'netshort' }"
-  >Netshort</button>
-</li>
+            <li>
+              <button 
+                @click="changePlatform('netshort')" 
+                :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'netshort' }"
+                class="rounded-[14px] transition-all duration-200 hover:scale-105"
+              >
+                <span class="mdi mdi-video-vintage"></span>
+                Netshort
+              </button>
+            </li>
 
-<li>
-  <button 
-    @click="changePlatform('dramave')" 
-    :class="{ active: selectedPlatform === 'dramave' }"
-  >Dramave</button>
-</li>
+            <li>
+              <button 
+                @click="changePlatform('dramave')" 
+                :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'dramave' }"
+                class="rounded-[14px] transition-all duration-200 hover:scale-105"
+              >
+                <span class="mdi mdi-television-classic"></span>
+                Dramave
+              </button>
+            </li>
 
-<li>
-  <button 
-    @click="changePlatform('shortmax')" 
-    :class="{ active: selectedPlatform === 'shortmax' }"
-  >Shortmax</button>
-</li>
+            <li>
+              <button 
+                @click="changePlatform('shortmax')" 
+                :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'shortmax' }"
+                class="rounded-[14px] transition-all duration-200 hover:scale-105"
+              >
+                <span class="mdi mdi-filmstrip"></span>
+                Shortmax
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
 
-      </ul>
+      <!-- Theme -->
+      <button 
+        :class="{'text-primary scale-110': activeMenu === 'theme'}" 
+        @click="handleMenuClick('theme')"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
+      >
+        <span class="mdi mdi-palette text-xl"></span>
+        <span class="text-[9px] font-medium">Theme</span>
+      </button>
+
+      <!-- Profile -->
+      <button 
+        :class="{'text-primary scale-110': activeMenu === 'profile'}" 
+        @click="handleMenuClick('profile')"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
+      >
+        <span class="mdi mdi-account text-xl"></span>
+        <span class="text-[9px] font-medium">Profile</span>
+      </button>
+
     </div>
-
-    <!-- Theme -->
-    <button :class="{'active': activeMenu === 'theme'}" @click="handleMenuClick('theme')">
-      <span class="mdi mdi-palette text-xl"></span>
-      <span class="btm-nav-label text-xs">Theme</span>
-    </button>
-
-    <!-- Profile -->
-    <button :class="{'active': activeMenu === 'profile'}" @click="handleMenuClick('profile')">
-      <span class="mdi mdi-account text-xl"></span>
-      <span class="btm-nav-label text-xs">Profile</span>
-    </button>
-
   </div>
 
   <!-- SEARCH MODAL -->
   <input type="checkbox" id="search_modal" class="modal-toggle" v-model="showSearchModal" />
   <div class="modal" :class="{ 'modal-open': showSearchModal }">
-    <div class="modal-box">
+    <div class="modal-box backdrop-blur-xl bg-base-100/95 rounded-[24px] border border-base-300/50">
       <h3 class="font-bold text-lg mb-4">Pencarian</h3>
 
       <input 
         type="text" 
-        placeholder="Cari mobil..."
-        class="input input-bordered w-full"
+        placeholder="Cari drama..."
+        class="input input-bordered w-full rounded-[16px]"
         v-model="searchQuery"
         @keyup.enter="submitSearch"
       />
 
       <div class="modal-action">
-        <button class="btn btn-primary" @click="submitSearch">Search</button>
-        <button class="btn" @click="closeSearchModal">Close</button>
+        <button class="btn btn-primary rounded-[14px]" @click="submitSearch">Search</button>
+        <button class="btn rounded-[14px]" @click="closeSearchModal">Close</button>
       </div>
     </div>
-    <label class="modal-backdrop" @click="closeSearchModal"></label>
+    <label class="modal-backdrop backdrop-blur-sm" @click="closeSearchModal"></label>
   </div>
 
   <!-- PROFILE MODAL -->
   <input type="checkbox" id="profile_modal" class="modal-toggle" v-model="showProfileModal" />
   <div class="modal" :class="{ 'modal-open': showProfileModal }">
-    <div class="modal-box max-w-2xl">
+    <div class="modal-box max-w-2xl backdrop-blur-xl bg-base-100/95 rounded-[24px] border border-base-300/50">
       <h3 class="font-bold text-lg mb-4">Profile Information</h3>
 
       <div class="mb-6">
@@ -100,19 +164,19 @@
         </h4>
 
         <div class="grid grid-cols-1 gap-3">
-          <div>
-            <span class="text-sm opacity-70">Username</span>
-            <span class="font-medium">{{ userData?.username || '-' }}</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">Username</div>
+            <div class="font-medium">{{ userData?.username || '-' }}</div>
           </div>
 
-          <div>
-            <span class="text-sm opacity-70">Email</span>
-            <span class="font-medium">{{ userData?.email || '-' }}</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">Email</div>
+            <div class="font-medium">{{ userData?.email || '-' }}</div>
           </div>
 
-          <div>
-            <span class="text-sm opacity-70">License Key</span>
-            <span class="font-mono text-sm">{{ userData?.license_key || '-' }}</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">License Key</div>
+            <div class="font-mono text-sm">{{ userData?.license_key || '-' }}</div>
           </div>
         </div>
       </div>
@@ -126,40 +190,40 @@
         </h4>
 
         <div class="grid grid-cols-1 gap-3">
-          <div>
-            <span class="text-sm opacity-70">Plan Name</span>
-            <span class="font-medium">{{ subscriptionData?.plan_name || '-' }}</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">Plan Name</div>
+            <div class="font-medium">{{ subscriptionData?.plan_name || '-' }}</div>
           </div>
 
-          <div>
-            <span class="text-sm opacity-70">Subscription Code</span>
-            <span class="font-mono text-sm">{{ subscriptionData?.subscription_code || '-' }}</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">Subscription Code</div>
+            <div class="font-mono text-sm">{{ subscriptionData?.subscription_code || '-' }}</div>
           </div>
 
-          <div>
-            <span class="text-sm opacity-70">Status</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">Status</div>
             <span class="badge" :class="getStatusClass(subscriptionData?.status)">
               {{ subscriptionData?.status || '-' }}
             </span>
           </div>
 
-          <div>
-            <span class="text-sm opacity-70">Start Date</span>
-            <span class="font-medium">{{ formatDate(subscriptionData?.start_at) }}</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">Start Date</div>
+            <div class="font-medium">{{ formatDate(subscriptionData?.start_at) }}</div>
           </div>
 
-          <div>
-            <span class="text-sm opacity-70">End Date</span>
-            <span class="font-medium">{{ formatDate(subscriptionData?.end_at) }}</span>
+          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+            <div class="text-sm opacity-70">End Date</div>
+            <div class="font-medium">{{ formatDate(subscriptionData?.end_at) }}</div>
           </div>
         </div>
       </div>
 
       <div class="modal-action">
-        <button class="btn" @click="closeProfileModal">Close</button>
+        <button class="btn rounded-[14px]" @click="closeProfileModal">Close</button>
       </div>
     </div>
-    <label class="modal-backdrop" @click="closeProfileModal"></label>
+    <label class="modal-backdrop backdrop-blur-sm" @click="closeProfileModal"></label>
   </div>
 </template>
 
@@ -182,12 +246,10 @@ const changePlatform = (platform) => {
   selectedPlatform.value = platform;
 
   if (!allowed.includes(platform)) {
-    // jika platform tidak valid → set ke dramabox
     selectedPlatform.value = 'dramabox';
     Storage.set('service_active_app_x', 'dramabox');
     router.visit(`/coming-soon/${platform}`);
   } else {
-    // platform valid
     Storage.set('service_active_app_x', platform);
     window.location.reload();
   }
@@ -204,7 +266,6 @@ const closeSearchModal = () => {
   searchQuery.value = '';
 };
 
-// submit to router.visit
 const submitSearch = () => {
   if (!searchQuery.value) return;
   router.visit(`/search?query=${encodeURIComponent(searchQuery.value)}`);
@@ -217,8 +278,6 @@ const handleMenuClick = (menu) => {
   if (menu === 'theme') randomizeTheme();
 };
 
-
-// PROFILE
 const openProfileModal = () => {
   userData.value = Storage.get('mobis_user');
   subscriptionData.value = Storage.get('mobis_sub');
@@ -246,7 +305,6 @@ const getStatusClass = (status) => {
   return map[status?.toLowerCase()] || 'badge-ghost';
 };
 
-// THEME
 const themes = ['light','dark','cupcake','emerald','retro','cyberpunk','night','coffee','winter'];
 const randomizeTheme = () => {
   const theme = themes[Math.floor(Math.random() * themes.length)];
