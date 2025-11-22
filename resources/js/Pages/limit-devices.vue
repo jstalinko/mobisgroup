@@ -45,7 +45,7 @@
       </div>
 
     </div>
-
+    <MobileNav/>
     <Footer />
 
   </div>
@@ -55,6 +55,7 @@
 import Navbar from './components/Navbar.vue'
 import Footer from './components/Footer.vue'
 import { router } from '@inertiajs/vue3'
+import MobileNav from './components/MobileNav.vue'
 
 const props = defineProps({
   devices: Array,
