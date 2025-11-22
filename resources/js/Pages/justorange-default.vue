@@ -1,4 +1,5 @@
 <template>
+  <InstallButton/>
   <div class="min-h-screen bg-base-300 pb-20 md:pb-0">
   <Navbar/>
 
@@ -96,9 +97,7 @@
 import { ref ,nextTick , computed, onMounted} from 'vue';
 import Navbar from './components/Navbar.vue';
 import HeaderSlider from './components/HeaderSlider.vue';
-import { slugify } from '../utils/helpers';
-import { router } from '@inertiajs/vue3';
-import Loading from './components/Loading.vue';
+import InstallButton from './components/InstallButton.vue';
 import Footer from './components/Footer.vue';
 import { getTheater,getCategory,getRecommend } from '../utils/api';
 import MobileNav from './components/MobileNav.vue';

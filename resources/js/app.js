@@ -14,3 +14,11 @@ createInertiaApp({
       .mount(el)
   },
 })
+
+window.deferredPWA = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    window.deferredPWA = e;
+    window.dispatchEvent(new CustomEvent('pwa-install-ready'));
+});
