@@ -3,7 +3,9 @@
   <div class="min-h-screen bg-base-200 flex flex-col items-center justify-center">
     <!-- Logo / Brand -->
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-primary">MOBISGROUP.ID</h1>
+      <h1 class="text-3xl font-bold text-primary">
+        {{ setting.site_name }}
+      </h1>
       <p class="text-sm text-base-content/70 mt-2">
         Masukkan lisensi Anda untuk melanjutkan
       </p>
@@ -50,12 +52,13 @@
 <script setup>
 import { ref } from "vue"
 import { http } from "../utils/api"
-import { Storage,generateUUID } from "../utils/helpers"
+import { Storage,generateUUID,siteSetting } from "../utils/helpers"
 import MobileNav from "./components/MobileNav.vue"
 import Footer from "./components/Footer.vue"
 import Navbar from "./components/Navbar.vue"
 const license = ref("")
-const loading = ref(false)
+const loading = ref(false);
+const setting = siteSetting();
 const errorMessage = ref("")
 function getCookie(name) {
   const v = `; ${document.cookie}`;

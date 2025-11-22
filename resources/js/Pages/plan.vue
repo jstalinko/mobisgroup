@@ -10,10 +10,11 @@
             <PlanCard v-for="plan in prop.plans" :key="plan.id" :items="plan" :checkout_url="prop.checkout_url"/>
         </div>
     </div>
-
+    <MobileNav/>
     <Footer />
 </template>
 <script setup>
+import MobileNav from './components/MobileNav.vue';
 import PlanCard from './components/PlanCard.vue';
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
