@@ -54,13 +54,36 @@ function getXsrfToken() {
 }
 
 export function getService() {
-    let service= localStorage.getItem("service_active_app_x") || "dramabox";
-       service = service
-        .trim()                // hapus spasi depan/belakang
-        .replace(/['"]/g, '')  // hapus " dan '
-        .replace(/%22|%20/g, ''); // hapus encode quotes & spaces
+    // --- ambil dari cookie ---
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    };
+
+    // Coba ambil dari cookie dulu
+    let service = getCookie("service_active_app_x");
+
+    // Jika cookie kosong → ambil dari localStorage
+    if (!service) {
+        service = localStorage.getItem("service_active_app_x");
+    }
+
+    // Jika dua-duanya kosong → default
+    if (!service) {
+        service = "dramabox";
+    }
+
+    // Bersihkan karakter tidak aman
+    service = service
+        .trim()
+        .replace(/['"]/g, '')
+        .replace(/%22|%20/g, '');
+
     return service;
 }
+
 
 
 export function getLang() {

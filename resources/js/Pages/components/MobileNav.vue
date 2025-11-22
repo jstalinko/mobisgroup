@@ -246,15 +246,25 @@ const changePlatform = (platform) => {
 
   selectedPlatform.value = platform;
 
+  // Simpan ke localStorage (Storage.set)
+  Storage.set('service_active_app_x', platform);
+
+  // Simpan ke cookie (agar dibaca PHP)
+  document.cookie = "service_active_app_x=" + platform + "; path=/; max-age=31536000";
+
   if (!allowed.includes(platform)) {
     selectedPlatform.value = 'dramabox';
+
+    // Save default fallback ke localStorage + cookie
     Storage.set('service_active_app_x', 'dramabox');
+    document.cookie = "service_active_app_x=dramabox; path=/; max-age=31536000";
+
     router.visit(`/coming-soon/${platform}`);
   } else {
-    Storage.set('service_active_app_x', platform);
     window.location.reload();
   }
 };
+
 
 const openSearchModal = () => {
   showSearchModal.value = true;

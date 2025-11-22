@@ -83,4 +83,8 @@ class JustOrangeController extends Controller
     {
         return Inertia::render('blocked');
     }
+    public function stopPage()
+    {
+        return Inertia::render('alert', ['message' => 'Anda tidak diizinkan mengakses layanan ini. Silakan hubungi dukungan pelanggan untuk informasi lebih lanjut.']);
+    }
 }

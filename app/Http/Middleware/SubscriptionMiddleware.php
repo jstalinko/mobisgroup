@@ -65,6 +65,19 @@ class SubscriptionMiddleware
         $plan = $subscription->plan;
         $maxDevices = $plan->max_devices ?? 1;
 
+         // ==============================
+        // 7. CHECK PLANS ACTIVE
+        // ==============================
+        $serviceActive = $_COOKIE['service_active_app_x'] ?? 'dramabox';
+        // $plan->feature_dramabox / $plan->feature_netshort . jika tidak sama redirect ke stop
+        if ($serviceActive == 'dramabox' && !$plan->feature_dramabox) {
+            return $this->error($request, 'Layanan Dramabox tidak termasuk dalam paket langganan Anda.', 403, 'stop');
+        }
+        if ($serviceActive == 'netshort' && !$plan->feature_netshort) {
+            return $this->error($request, 'Layanan Netshort tidak termasuk dalam paket langganan Anda.', 403, 'stop');
+        }
+        
+
         // Ambil Device ID (web & API)
         $deviceId = $this->getDeviceId($request);
 
