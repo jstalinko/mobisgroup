@@ -100,6 +100,12 @@
 
     <!-- Mobile View -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black">
+      <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-black z-30">
+    <div class="text-center">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+      <p class="text-white mt-4">Memuat video...</p>
+    </div>
+  </div>
       <div 
         ref="mobileContainer"
         class="snap-y snap-mandatory h-full overflow-y-scroll"
@@ -110,14 +116,25 @@
           :key="episode.id"
           class="snap-start h-screen flex items-center justify-center relative"
         >
-          <video
-            :ref="el => { if (el) videoRefs[index] = el }"
-            :src="getDefaultVideoUrl(episode)"
-            class="w-full h-full object-cover"
-            :controls="currentIndex === index"
-            loop
-            playsinline
-          ></video>
+           <div 
+        v-if="loadingIndex.has(index)" 
+        class="absolute inset-0 flex items-center justify-center bg-black/80 z-10"
+      >
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <video
+        :ref="el => { if (el) videoRefs[index] = el }"
+        :src="getDefaultVideoUrl(episode)"
+        class="w-full h-full object-cover"
+        controls
+        autoplay
+        loop
+        playsinline
+        preload="auto"
+        @loadstart="handleVideoLoading(index)"
+        @canplay="handleVideoCanPlay(index)"
+      ></video>
 
           <!-- Episode Info Overlay -->
           <div class="absolute bottom-20 left-4 right-4 text-white">
@@ -262,6 +279,8 @@ const videoRefs = ref([]);
 const isEpisodeDrawerOpen = ref(false);
 const isQualityDrawerOpen = ref(false);
 const scrollTimeout = ref(null);
+const isLoading = ref(true);
+const loadingIndex = ref(new Set());
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value]);
 
@@ -276,7 +295,7 @@ const selectEpisode = (index) => {
 };
 
 const selectEpisodeMobile = (index) => {
-  // Pause semua video dulu
+  // Pause all videos
   videoRefs.value.forEach((video) => {
     if (video) {
       video.pause();
@@ -287,23 +306,22 @@ const selectEpisodeMobile = (index) => {
   currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
   isEpisodeDrawerOpen.value = false;
   
+  // Scroll to episode
   const container = mobileContainer.value;
   if (container) {
     container.scrollTo({
       top: index * window.innerHeight,
       behavior: 'smooth'
     });
-    
-    // Tunggu scroll selesai, BARU play
-    setTimeout(() => {
-      const currentVideo = videoRefs.value[index];
-      if (currentVideo) {
-        currentVideo.play().catch(err => {
-          console.log('Play error:', err);
-        });
-      }
-    }, 500);
   }
+  
+  // Auto play after scroll
+  setTimeout(() => {
+    const currentVideo = videoRefs.value[index];
+    if (currentVideo) {
+      currentVideo.play().catch(err => console.log('Play error:', err));
+    }
+  }, 300);
 };
 
 const nextEpisode = () => {
@@ -355,29 +373,44 @@ const handleMobileScroll = (e) => {
     const newIndex = Math.round(scrollTop / window.innerHeight);
     
     if (newIndex !== currentIndex.value && newIndex >= 0 && newIndex < episodes.value.length) {
+      // Pause all videos
+      videoRefs.value.forEach((video) => {
+        if (video) {
+          video.pause();
+        }
+      });
+      
       currentIndex.value = newIndex;
       currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
       
-     // Pause ALL videos first
-videoRefs.value.forEach((video) => {
-  if (video) {
-    video.pause();
-    video.currentTime = 0; // Reset ke awal
-  }
-});
-
-// BARU play yang baru setelah delay
-setTimeout(() => {
-  const currentVideo = videoRefs.value[newIndex];
-  if (currentVideo) {
-    currentVideo.play().catch(err => {
-      console.log('Play error:', err);
-    });
-  }
-}, 100);
-
+      // Auto play current video
+      const currentVideo = videoRefs.value[newIndex];
+      if (currentVideo) {
+        currentVideo.play().catch(err => console.log('Play error:', err));
+      }
     }
-  }, 150);
+  }, 100);
+};
+
+// FUNCTION BARU 1
+const handleVideoLoading = (index) => {
+  loadingIndex.value.add(index);
+};
+
+// FUNCTION BARU 2
+const handleVideoCanPlay = (index) => {
+  loadingIndex.value.delete(index);
+  if (index === 0) {
+    isLoading.value = false;
+  }
+  
+  // Auto play if this is the current video
+  if (index === currentIndex.value) {
+    const video = videoRefs.value[index];
+    if (video) {
+      video.play().catch(err => console.log('Play error:', err));
+    }
+  }
 };
 
 const openEpisodeDrawer = () => {
@@ -418,19 +451,8 @@ onMounted(async () => {
   episodes.value = r?.data;
   dramaDetail.value = x?.data;
   
-  // Set initial video
   if (episodes.value.length > 0) {
     currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
-    
-    // Auto-play video pertama di mobile
-    setTimeout(() => {
-      const firstVideo = videoRefs.value[0];
-      if (firstVideo && window.innerWidth < 1024) {
-        firstVideo.play().catch(err => {
-          console.log('Auto-play prevented:', err);
-        });
-      }
-    }, 500);
   }
 });
 
