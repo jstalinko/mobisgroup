@@ -1,5 +1,14 @@
 import { Storage } from "./helpers";
-
+export function getDeviceId()
+{
+    const match = document.cookie.match(/device_id=([^;]+)/);
+    // get from localstorage if not found in cookie
+    if (match) {
+        return decodeURIComponent(match[1]);
+    } else {
+        return localStorage.getItem('device_id') || null;
+    }
+}
 export async function http(url, options = {}) {
     const csrfToken = document
         .querySelector('meta[name="csrf-token"]')
@@ -13,6 +22,7 @@ export async function http(url, options = {}) {
         "X-Requested-With": "XMLHttpRequest",
         ...(csrfToken && { "X-CSRF-TOKEN": csrfToken }),
         ...{"X-XSRF-TOKEN": getXsrfToken()},
+        ...{"X-DEVICE-ID": getDeviceId()},
         ...(options.body && { "Content-Type": "application/json" }),
 
         // Tambahan otomatis
@@ -51,6 +61,8 @@ function getService() {
         .replace(/%22|%20/g, ''); // hapus encode quotes & spaces
     return service;
 }
+
+
 function getLang() {
     let lang = localStorage.getItem('site_lang') || 'in';
 

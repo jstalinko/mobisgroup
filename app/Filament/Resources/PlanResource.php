@@ -17,7 +17,7 @@ class PlanResource extends Resource
 {
     protected static ?string $model = Plan::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-c-queue-list';
 
     public static function form(Form $form): Form
     {
@@ -28,14 +28,22 @@ class PlanResource extends Resource
                 Forms\Components\TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefix('$'),
+                    ->prefix('Rp'),
                 Forms\Components\TextInput::make('description'),
+                  Forms\Components\Select::make('duration')
+                    ->required()
+                    ->options([
+                        'month' => '/Bulan',
+                        'year' => '/Tahun',
+                    ]),
                 Forms\Components\Toggle::make('feature_dramabox')
                     ->required(),
                 Forms\Components\Toggle::make('feature_netshort')
                     ->required(),
-                Forms\Components\TextInput::make('duration')
-                    ->required(),
+                Forms\Components\TextInput::make('max_devices')
+                    ->required()
+                    ->numeric()
+                    ->default(2),
                 Forms\Components\Toggle::make('active')
                     ->required(),
             ]);
@@ -50,16 +58,13 @@ class PlanResource extends Resource
                 Tables\Columns\TextColumn::make('price')
                     ->money('IDR')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('description')
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('feature_dramabox')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('feature_netshort')
-                    ->boolean(),
+                Tables\Columns\TextColumn::make('max_devices')
+                    ->searchable()->formatStateUsing(fn (string $state): string => $state. ' Devices'),
+                Tables\Columns\ToggleColumn::make('feature_dramabox'),
+                Tables\Columns\ToggleColumn::make('feature_netshort'),
                 Tables\Columns\TextColumn::make('duration')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('active')
-                    ->boolean(),
+                Tables\Columns\ToggleColumn::make('active'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

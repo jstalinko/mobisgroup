@@ -54,4 +54,8 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(Subscription::class)->where('status', 'active');
     }
+    public function userDevices()
+    {
+        return $this->hasMany(UserDevice::class);
+    }
 }

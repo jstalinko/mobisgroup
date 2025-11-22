@@ -3,6 +3,10 @@
 namespace App\Helpers;
 
 use App\Models\Logs;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\File;
 
 class Helper
 {
@@ -384,6 +388,75 @@ class Helper
             return 'Safari';
         } else {
             return 'Other';
+        }
+    }
+
+    public static function getDeviceName($userAgent)
+    {
+        $platform = self::platform('platform', $userAgent);
+        $browser = self::getBrowser();
+        return ucfirst($platform) . ' - ' . $browser;
+    }
+    public static  function cache_count()
+    {
+        $driver = config('cache.default');
+
+        switch ($driver) {
+
+            // ==============================
+            // FILE CACHE
+            // ==============================
+            case 'file':
+                $path = storage_path('framework/cache/data');
+                return count(File::allFiles($path));
+
+            // ==============================
+            // DATABASE CACHE
+            // ==============================
+            case 'database':
+                return DB::table(config('cache.stores.database.table', 'cache'))->count();
+
+            // ==============================
+            // REDIS CACHE
+            // ==============================
+            case 'redis':
+                $prefix = config('cache.prefix') . ':*';
+
+                $total = 0;
+                $cursor = 0;
+                
+
+                do {
+                    [$cursor, $keys] = Redis::scan($cursor, [
+                        'MATCH' => $prefix,
+                        'COUNT' => 500
+                    ]);
+
+                    $total += $keys == null ? 0 : count($keys);
+
+                } while ($cursor != 0);
+
+                return $total;
+
+            // ==============================
+            // MEMCACHED
+            // ==============================
+            case 'memcached':
+                $memcached = Cache::getStore()->getMemcached();
+                $stats = $memcached->getStats();
+
+                $total = 0;
+                foreach ($stats as $server => $data) {
+                    $total += $data['curr_items'] ?? 0;
+                }
+
+                return $total;
+
+            // ==============================
+            // DEFAULT (fallback)
+            // ==============================
+            default:
+                return null;
         }
     }
  

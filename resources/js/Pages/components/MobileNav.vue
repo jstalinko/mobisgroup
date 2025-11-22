@@ -164,7 +164,7 @@
         </h4>
 
         <div class="grid grid-cols-1 gap-3">
-          <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
+          <!-- <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
             <div class="text-sm opacity-70">Username</div>
             <div class="font-medium">{{ userData?.username || '-' }}</div>
           </div>
@@ -172,7 +172,7 @@
           <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
             <div class="text-sm opacity-70">Email</div>
             <div class="font-medium">{{ userData?.email || '-' }}</div>
-          </div>
+          </div> -->
 
           <div class="bg-base-200/50 rounded-[16px] p-3 backdrop-blur-sm">
             <div class="text-sm opacity-70">License Key</div>
@@ -220,6 +220,7 @@
       </div>
 
       <div class="modal-action">
+        <button class="btn rounded-[14px] btn-error" @click="logoutAction">Logout</button>
         <button class="btn rounded-[14px]" @click="closeProfileModal">Close</button>
       </div>
     </div>
@@ -283,6 +284,16 @@ const openProfileModal = () => {
   subscriptionData.value = Storage.get('mobis_sub');
   showProfileModal.value = true;
 };
+const logoutAction = () =>{
+  userData.value = null;
+  subscriptionData.value = null;
+  Storage.delete('mobis_user');
+  Storage.delete('mobis_sub');
+  Storage.delete('device_id');
+  document.cookie = 'device_id=; path=/; max-age=0';
+  Storage.delete('pwa-install-dismissed');
+  router.visit('/logout');
+}
 
 const closeProfileModal = () => {
   showProfileModal.value = false;

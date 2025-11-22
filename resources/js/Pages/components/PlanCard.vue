@@ -41,6 +41,10 @@
           title="Netshort Access"
           :active="items.feature_netshort"
         />
+        <FeatureLine 
+          :title="items.max_devices + ' Max Devices'"
+          :active="true"
+        />
           <FeatureLine 
           :title="'Masa aktif satu '+(items.duration === 'year' ? 'tahun' : 'bulan')"
           :active="true"

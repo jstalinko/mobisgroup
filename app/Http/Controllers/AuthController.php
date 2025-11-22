@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserDevice;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 
 class AuthController extends Controller
 {
@@ -22,6 +24,7 @@ class AuthController extends Controller
     public function checkLicense(Request $request)
     {
         $license_key = $request->license_key;
+        $device_id = $request->device_id;
 
         // Cari user berdasarkan license_key
         $user = User::where('license_key', $license_key)->first();
@@ -33,6 +36,8 @@ class AuthController extends Controller
             ], 404);
         }
     Auth::login($user,true);
+    session()->put('device_id', $device_id);
+    
 
         // Mengambil subscription aktif melalui relasi activeSubscription()
         $subscription = $user->activeSubscription;
@@ -75,7 +80,28 @@ class AuthController extends Controller
                     'status'     => $subscription->status,
                     'subscription_code' => $subscription->subscription_code,
                 ],
+                'device_id' => $device_id,
             ],
         ], 200);
+    }
+
+    public function logout()
+    {
+        $user = auth()->user();
+        if($user){
+            UserDevice::where('user_id', $user->id)
+                ->where('device_id', session('device_id'))
+                ->update(['revoked' => true]);
+        }else{
+            // For API logout with token
+            $token = request()->user()->currentAccessToken();
+            if ($token) {
+                $token->delete();
+            }
+        }
+        session()->forget('device_id');
+        auth()->logout();
+        @session_destroy();
+        return redirect('/');
     }
 }

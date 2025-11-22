@@ -50,7 +50,7 @@
 <script setup>
 import { ref } from "vue"
 import { http } from "../utils/api"
-import { Storage } from "../utils/helpers"
+import { Storage,generateUUID } from "../utils/helpers"
 import MobileNav from "./components/MobileNav.vue"
 import Footer from "./components/Footer.vue"
 import Navbar from "./components/Navbar.vue"
@@ -84,10 +84,12 @@ const submitLicense = async () => {
        credentials: "include",
       headers: {
         "X-XSRF-TOKEN": getXsrfToken(),
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-DEViCE-ID': getCookie('device_id') || generateUUID()
       },
       body: {
         csrf_token: csrfToken,
+        device_id: getCookie('device_id') || generateUUID(),
         license_key: license.value, // kirim sesuai controller
       }
     })
@@ -104,7 +106,9 @@ const submitLicense = async () => {
 
     Storage.set('mobis_user', res.data.user);
     Storage.set('mobis_sub', res.data.subscription);
-
+    Storage.set('device_id', res.data.device_id);
+    document.cookie = `device_id=${res.data.device_id}; path=/; max-age=${7 * 24 * 60}`;
+    
     // Jika license valid → redirect ke dashboard atau halaman premium
     window.location.href = "/";
 

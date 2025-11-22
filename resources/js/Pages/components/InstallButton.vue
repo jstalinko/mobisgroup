@@ -42,6 +42,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue"
+import { Storage } from "../../utils/helpers"
 
 const show = ref(false)
 let deferredPrompt = null
@@ -49,7 +50,9 @@ let deferredPrompt = null
 onMounted(() => {
   window.addEventListener("pwa-install-ready", () => {
     deferredPrompt = window.deferredPWA
-    show.value = true
+    if (!Storage.get("pwa-install-dismissed")) {
+      show.value = true
+    }
   })
 })
 
@@ -65,6 +68,7 @@ const install = async () => {
 
 const close = () => {
   show.value = false
+  Storage.set("pwa-install-dismissed", "true");
 }
 </script>
 

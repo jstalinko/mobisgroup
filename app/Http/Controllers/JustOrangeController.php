@@ -12,11 +12,10 @@ class JustOrangeController extends Controller
 {
     protected $service;
     
+   
     public function index(Request $request): \Inertia\Response
     {
-        
-        
-        
+        // dd(session('errors'));
         return Inertia::render('justorange-default');
     }
     public function movieDetail(Request $request):\Inertia\Response
@@ -71,5 +70,13 @@ class JustOrangeController extends Controller
         $service = $request->service;
         $data['service'] = $service;
         return Inertia::render('coming-soon',$data);
+    }
+
+    public function limitDevices()
+    {
+        $data['limitReached'] = true;
+        $data['maxDevices'] = auth()->user()->activeSubscription->plan->max_devices;
+        $data['devices'] = auth()->user()->userDevices()->where('revoked', false)->get();
+        return Inertia::render('limit-devices',$data);
     }
 }

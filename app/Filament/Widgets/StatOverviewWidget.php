@@ -2,11 +2,10 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Link;
-use App\Models\Logs;
 use App\Models\User;
-use App\Models\Domain;
-use Illuminate\Support\Facades\Redis;
+use App\Helpers\Helper;
+use App\Models\Subscription;
+use App\Models\UserDevice;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 
@@ -14,10 +13,15 @@ class StatOverviewWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        $cached = Redis::keys('*');
+        $cached = Helper::cache_count();
         return [
             Stat::make('Total Pengguna' , User::count()),
-            Stat::make('Cached DB' , count($cached))
+            Stat::make('Cached DB' , $cached),
+            Stat::make('Total Devices',UserDevice::count()),
+            Stat::make('Total Active Devices',UserDevice::where('revoked',false)->count()),
+            Stat::make('Total Subscriptions',User::whereHas('activeSubscription')->count()),
+            Stat::make('Total Plans',\App\Models\Plan::count()),
+            Stat::make('Total Income','IDR ' .str_replace(',','.',number_format(Subscription::where('status','active')->sum('price')))),
         ];
     }
 }

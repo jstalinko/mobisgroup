@@ -17,6 +17,7 @@ class Plan extends Model
         'feature_dramabox',
         'feature_netshort',
         'duration',
+        'max_devices',
         'active',
     ];
 

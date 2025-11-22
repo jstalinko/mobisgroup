@@ -208,14 +208,14 @@
             User Details
           </h4>
           <div class="grid grid-cols-1 gap-3">
-            <div class="flex flex-col">
+            <!-- <div class="flex flex-col">
               <span class="text-sm opacity-70">Username</span>
               <span class="font-medium">{{ userData?.name || '-' }}</span>
             </div>
             <div class="flex flex-col">
               <span class="text-sm opacity-70">Email</span>
               <span class="font-medium">{{ userData?.email || '-' }}</span>
-            </div>
+            </div> -->
             <div class="flex flex-col">
               <span class="text-sm opacity-70">License Key</span>
               <span class="font-mono text-sm">{{ userData?.license_key || '-' }}</span>
@@ -386,6 +386,9 @@ const logoutAction = () =>{
   subscriptionData.value = null;
   Storage.delete('mobis_user');
   Storage.delete('mobis_sub');
+  Storage.delete('device_id');
+  document.cookie = 'device_id=; path=/; max-age=0';
+  Storage.delete('pwa-install-dismissed');
   router.visit('/logout');
 }
 
