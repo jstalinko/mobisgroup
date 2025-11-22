@@ -28,6 +28,6 @@ Route::get('/logout',function(){
     @session_destroy();
     return redirect('/');
 });
-Route::get('/plan', action: fn() => Inertia::render('plan'))->name('plan');
+Route::get('/plan', [JustOrangeController::class,'plan'])->name('plan');
 Route::get('/blank/{id}',[JustOrangeController::class,'blankPage'] );
 Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonService']);

@@ -1,4 +1,5 @@
 <template>
+  <Navbar/>
   <div class="min-h-screen bg-base-200 flex flex-col items-center justify-center">
     <!-- Logo / Brand -->
     <div class="text-center mb-8">
@@ -41,18 +42,18 @@
         </div>
       </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="mt-8 text-sm text-base-content/60">
-      © {{ new Date().getFullYear() }} MOBISGROUP.ID — All rights reserved
-    </footer>
-  </div>
+    </div>
+<MobileNav/>
+  <Footer/>
 </template>
 
 <script setup>
 import { ref } from "vue"
 import { http } from "../utils/api"
 import { Storage } from "../utils/helpers"
+import MobileNav from "./components/MobileNav.vue"
+import Footer from "./components/Footer.vue"
+import Navbar from "./components/Navbar.vue"
 const license = ref("")
 const loading = ref(false)
 const errorMessage = ref("")

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
 use Inertia\Inertia;
 use App\Models\MetaSetting;
 use Illuminate\Http\Request;
@@ -49,6 +50,20 @@ class JustOrangeController extends Controller
         $prop['query'] = $query;
         $data['prop'] = $prop;
         return Inertia::render('search',$data);
+    }
+    public function plan()
+    {
+        $setting = json_decode(\Illuminate\Support\Facades\Storage::get('settings.json'), true);
+        $formatPhone = function($number){
+            if(substr($number,0,1) == '0'){
+                $number = '62'.substr($number,1);
+            }
+            return preg_replace('/[^0-9]/', '', $number);
+        };
+        $prop['plans'] = Plan::where('active', true)->get();
+        $prop['checkout_url'] = "https://wa.me/".$formatPhone($setting['no_whatsapp_admin'])."?text=Saya%20ingin%20berlangganan%20plan%20";
+        $data['prop'] = $prop;
+        return Inertia::render('plan',$data);
     }
 
     public function ComingSoonService(Request $request)
