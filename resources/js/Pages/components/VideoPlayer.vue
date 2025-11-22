@@ -115,7 +115,6 @@
             :src="getDefaultVideoUrl(episode)"
             class="w-full h-full object-cover"
             :controls="currentIndex === index"
-            :autoplay="currentIndex === index"
             loop
             playsinline
           ></video>
@@ -277,17 +276,33 @@ const selectEpisode = (index) => {
 };
 
 const selectEpisodeMobile = (index) => {
+  // Pause semua video dulu
+  videoRefs.value.forEach((video) => {
+    if (video) {
+      video.pause();
+    }
+  });
+  
   currentIndex.value = index;
   currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
   isEpisodeDrawerOpen.value = false;
   
-  // Scroll to episode
   const container = mobileContainer.value;
   if (container) {
     container.scrollTo({
       top: index * window.innerHeight,
       behavior: 'smooth'
     });
+    
+    // Tunggu scroll selesai, BARU play
+    setTimeout(() => {
+      const currentVideo = videoRefs.value[index];
+      if (currentVideo) {
+        currentVideo.play().catch(err => {
+          console.log('Play error:', err);
+        });
+      }
+    }, 500);
   }
 };
 
@@ -343,16 +358,24 @@ const handleMobileScroll = (e) => {
       currentIndex.value = newIndex;
       currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
       
-      // Play current video, pause others
-      videoRefs.value.forEach((video, idx) => {
-        if (video) {
-          if (idx === newIndex) {
-            video.play();
-          } else {
-            video.pause();
-          }
-        }
-      });
+     // Pause ALL videos first
+videoRefs.value.forEach((video) => {
+  if (video) {
+    video.pause();
+    video.currentTime = 0; // Reset ke awal
+  }
+});
+
+// BARU play yang baru setelah delay
+setTimeout(() => {
+  const currentVideo = videoRefs.value[newIndex];
+  if (currentVideo) {
+    currentVideo.play().catch(err => {
+      console.log('Play error:', err);
+    });
+  }
+}, 100);
+
     }
   }, 150);
 };
@@ -389,13 +412,26 @@ const copyLink = () => {
 };
 
 
-
 onMounted(async () => {
   let r = await getPlayerVideo(props.bookId,props.episode);
   let x = await getTheaterDetail(props.bookId);
-  currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
   episodes.value = r?.data;
   dramaDetail.value = x?.data;
+  
+  // Set initial video
+  if (episodes.value.length > 0) {
+    currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+    
+    // Auto-play video pertama di mobile
+    setTimeout(() => {
+      const firstVideo = videoRefs.value[0];
+      if (firstVideo && window.innerWidth < 1024) {
+        firstVideo.play().catch(err => {
+          console.log('Auto-play prevented:', err);
+        });
+      }
+    }, 500);
+  }
 });
 
 onUnmounted(() => {
