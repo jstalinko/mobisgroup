@@ -53,7 +53,7 @@ function getXsrfToken() {
     return match ? decodeURIComponent(match[1]) : "";
 }
 
-function getService() {
+export function getService() {
     let service= localStorage.getItem("service_active_app_x") || "dramabox";
        service = service
         .trim()                // hapus spasi depan/belakang
@@ -63,7 +63,7 @@ function getService() {
 }
 
 
-function getLang() {
+export function getLang() {
     let lang = localStorage.getItem('site_lang') || 'in';
 
     // Bersihkan karakter tidak penting
