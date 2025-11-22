@@ -69,7 +69,7 @@ class SubscriptionMiddleware
         $deviceId = $this->getDeviceId($request);
 
         if (!$deviceId) {
-            return $this->error($request, 'Device ID tidak terdeteksi.', 400);
+            return $this->error($request, 'Device ID tidak terdeteksi.', 400,'login');
         }
 
         // Cek device di DB
