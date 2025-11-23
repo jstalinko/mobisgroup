@@ -56,8 +56,8 @@
 
         <!-- Video Info -->
         <div class="bg-base-100 rounded-lg p-6 mb-4">
-          <h1 class="text-2xl font-bold mb-2">{{ currentEpisode?.title }}</h1>
-          <p class="text-base-content/70 mb-4">{{ currentEpisode?.description }}</p>
+          <h1 class="text-2xl font-bold mb-2">{{ currentEpisode?.title }} | {{ dramaDetail?.title }}</h1>
+          <p class="text-base-content/70 mb-4">{{ dramaDetail?.introduction }}</p>
           
           <!-- Share Buttons -->
           <div class="flex gap-2">
@@ -277,7 +277,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/api';
 
 const props = defineProps({bookId:String,episode:String});
@@ -295,16 +295,27 @@ const isLoading = ref(true);
 const loadingIndex = ref(new Set());
 const loadRange = ref(2); 
 
-const currentEpisode = computed(() => episodes.value[currentIndex.value]);
+const currentEpisode = computed(() => episodes.value[currentIndex.value] );
 
 const getDefaultVideoUrl = (episode) => {
   const defaultVideo = episode?.video_urls?.find(v => v.is_default);
   return defaultVideo ? defaultVideo.url : episode?.video_urls[0].url;
 };
 
+const updateURL = (episodeNum) => {
+  const pathParts = window.location.pathname.split('/');
+  const bookIdIndex = pathParts.findIndex(part => part === props.bookId);
+  if (bookIdIndex !== -1 && pathParts[bookIdIndex + 1]) {
+    pathParts[bookIdIndex + 1] = episodeNum.toString();
+    const newPath = pathParts.join('/');
+    window.history.pushState({}, '', newPath);
+  }
+};
+
 const selectEpisode = (index) => {
   currentIndex.value = index;
   currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+  updateURL(index + 1); // ← TAMBAHKAN BARIS INI
 };
 const shouldLoadVideo = (index) => {
   const distance = Math.abs(index - currentIndex.value);
@@ -322,6 +333,7 @@ const selectEpisodeMobile = (index) => {
   currentIndex.value = index;
   currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
   isEpisodeDrawerOpen.value = false;
+  updateURL(index + 1);
   
   // Scroll to episode
   const container = mobileContainer.value;
@@ -356,6 +368,7 @@ const previousEpisode = () => {
 const changeQuality = (url) => {
   const currentTime = videoPlayer.value?.currentTime || 0;
   currentVideoUrl.value = url;
+  updateURL(newIndex + 1);
   setTimeout(() => {
     if (videoPlayer.value) {
       videoPlayer.value.currentTime = currentTime;
@@ -461,7 +474,6 @@ const copyLink = () => {
   });
 };
 
-
 onMounted(async () => {
   let r = await getPlayerVideo(props.bookId,props.episode);
   let x = await getTheaterDetail(props.bookId);
@@ -469,7 +481,44 @@ onMounted(async () => {
   dramaDetail.value = x?.data;
   
   if (episodes.value.length > 0) {
+    // Set current index based on props.episode from URL
+    const episodeNum = parseInt(props.episode) || 1;
+    currentIndex.value = episodeNum - 1; // Convert to 0-based index
+    
+    // Ensure index is within bounds
+    if (currentIndex.value < 0) currentIndex.value = 0;
+    if (currentIndex.value >= episodes.value.length) currentIndex.value = episodes.value.length - 1;
+    
     currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+    
+    // For mobile view, scroll to correct episode
+    if (mobileContainer.value) {
+      setTimeout(() => {
+        mobileContainer.value.scrollTo({
+          top: currentIndex.value * window.innerHeight,
+          behavior: 'auto'
+        });
+      }, 100);
+    }
+  }
+});
+
+// TAMBAHKAN watch ini setelah onMounted:
+watch(() => props.episode, (newEpisode) => {
+  if (newEpisode && episodes.value.length > 0) {
+    const episodeNum = parseInt(newEpisode) || 1;
+    const newIndex = episodeNum - 1;
+    
+    if (newIndex >= 0 && newIndex < episodes.value.length && newIndex !== currentIndex.value) {
+      selectEpisode(newIndex);
+      
+      if (mobileContainer.value) {
+        mobileContainer.value.scrollTo({
+          top: newIndex * window.innerHeight,
+          behavior: 'smooth'
+        });
+      }
+    }
   }
 });
 
