@@ -11,21 +11,15 @@
     ">
 
       <!-- Home -->
-      <button 
-        :class="{'text-primary scale-110': activeMenu === 'home'}" 
-        @click="router.visit('/')"
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
-      >
+      <button :class="{ 'text-primary scale-110': activeMenu === 'home' }" @click="router.visit('/')"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1">
         <span class="mdi mdi-home text-xl"></span>
         <span class="text-[9px] font-medium">Home</span>
       </button>
 
       <!-- Search -->
-      <button 
-        :class="{'text-primary scale-110': activeMenu === 'search'}" 
-        @click="openSearchModal"
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
-      >
+      <button :class="{ 'text-primary scale-110': activeMenu === 'search' }" @click="openSearchModal"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1">
         <span class="mdi mdi-magnify text-xl"></span>
         <span class="text-[9px] font-medium">Cari</span>
       </button>
@@ -33,9 +27,7 @@
       <!-- PLATFORM (CENTER BUTTON) -->
       <div class="relative -mt-6">
         <div class="dropdown dropdown-top">
-          <label 
-            tabindex="0" 
-            class="
+          <label tabindex="0" class="
               btn btn-circle
               bg-gradient-to-br from-primary to-secondary
               border-4 border-base-100
@@ -43,13 +35,10 @@
               hover:scale-105 active:scale-95
               transition-all duration-200
               w-14 h-14
-            "
-          >
+            ">
             <span class="mdi mdi-movie text-xl text-white"></span>
           </label>
-          <ul 
-            tabindex="0" 
-            class="
+          <ul tabindex="0" class="
               dropdown-content menu
               backdrop-blur-xl bg-base-100/90
               rounded-[20px]
@@ -57,47 +46,38 @@
               shadow-2xl shadow-black/20
               border border-base-300/50
               mb-3
-            "
-          >
+            ">
             <li>
-              <button 
-                @click="changePlatform('dramabox')" 
+              <button @click="changePlatform('dramabox')"
                 :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'dramabox' }"
-                class="rounded-[14px] transition-all duration-200 hover:scale-105"
-              >
+                class="rounded-[14px] transition-all duration-200 hover:scale-105">
                 <span class="mdi mdi-drama-masks"></span>
                 Dramabox
               </button>
             </li>
 
             <li>
-              <button 
-                @click="changePlatform('netshort')" 
+              <button @click="changePlatform('netshort')"
                 :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'netshort' }"
-                class="rounded-[14px] transition-all duration-200 hover:scale-105"
-              >
+                class="rounded-[14px] transition-all duration-200 hover:scale-105">
                 <span class="mdi mdi-video-vintage"></span>
                 Netshort
               </button>
             </li>
 
             <li>
-              <button 
-                @click="changePlatform('dramave')" 
+              <button @click="changePlatform('dramave')"
                 :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'dramave' }"
-                class="rounded-[14px] transition-all duration-200 hover:scale-105"
-              >
+                class="rounded-[14px] transition-all duration-200 hover:scale-105">
                 <span class="mdi mdi-television-classic"></span>
                 Dramave
               </button>
             </li>
 
             <li>
-              <button 
-                @click="changePlatform('shortmax')" 
+              <button @click="changePlatform('shortmax')"
                 :class="{ 'bg-primary/20 text-primary': selectedPlatform === 'shortmax' }"
-                class="rounded-[14px] transition-all duration-200 hover:scale-105"
-              >
+                class="rounded-[14px] transition-all duration-200 hover:scale-105">
                 <span class="mdi mdi-filmstrip"></span>
                 Shortmax
               </button>
@@ -107,23 +87,25 @@
       </div>
 
       <!-- Theme -->
-      <button 
-        :class="{'text-primary scale-110': activeMenu === 'theme'}" 
-        @click="handleMenuClick('theme')"
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
-      >
+      <button :class="{ 'text-primary scale-110': activeMenu === 'theme' }" @click="handleMenuClick('theme')"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1">
         <span class="mdi mdi-palette text-xl"></span>
         <span class="text-[9px] font-medium">Theme</span>
       </button>
 
       <!-- Profile -->
-      <button 
-        :class="{'text-primary scale-110': activeMenu === 'profile'}" 
-        @click="handleMenuClick('profile')"
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1"
-      >
+      <button v-if="userData != null && subscriptionData != null"
+        :class="{ 'text-primary scale-110': activeMenu === 'profile' }" @click="handleMenuClick('profile')"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1">
         <span class="mdi mdi-account text-xl"></span>
         <span class="text-[9px] font-medium">Profile</span>
+      </button>
+      <button :class="{ 'text-primary scale-110': activeMenu == 'profile' }"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py1"
+        @click="router.visit('/login')"
+        v-else>
+        <span class="mdi mdi-login text-xl"></span>
+        <span class="text-[9px] font-medium">LogIn</span>
       </button>
 
     </div>
@@ -135,13 +117,8 @@
     <div class="modal-box backdrop-blur-xl bg-base-100/95 rounded-[24px] border border-base-300/50">
       <h3 class="font-bold text-lg mb-4">Pencarian</h3>
 
-      <input 
-        type="text" 
-        placeholder="Cari drama..."
-        class="input input-bordered w-full rounded-[16px]"
-        v-model="searchQuery"
-        @keyup.enter="submitSearch"
-      />
+      <input type="text" placeholder="Cari drama..." class="input input-bordered w-full rounded-[16px]"
+        v-model="searchQuery" @keyup.enter="submitSearch" />
 
       <div class="modal-action">
         <button class="btn btn-primary rounded-[14px]" @click="submitSearch">Search</button>
@@ -294,7 +271,7 @@ const openProfileModal = () => {
   subscriptionData.value = Storage.get('mobis_sub');
   showProfileModal.value = true;
 };
-const logoutAction = () =>{
+const logoutAction = () => {
   userData.value = null;
   subscriptionData.value = null;
   Storage.delete('mobis_user');
@@ -326,7 +303,7 @@ const getStatusClass = (status) => {
   return map[status?.toLowerCase()] || 'badge-ghost';
 };
 
-const themes = ['light','dark','cupcake','emerald','retro','cyberpunk','night','coffee','winter'];
+const themes = ['light', 'dark', 'cupcake', 'emerald', 'retro', 'cyberpunk', 'night', 'coffee', 'winter'];
 const randomizeTheme = () => {
   const theme = themes[Math.floor(Math.random() * themes.length)];
   document.documentElement.setAttribute('data-theme', theme);

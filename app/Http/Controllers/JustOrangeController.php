@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\MetaSetting;
 use Illuminate\Http\Request;
 use App\Interfaces\MovieServiceInterface;
+use App\Models\Rekening;
 
 class JustOrangeController extends Controller
 {
@@ -61,6 +62,7 @@ class JustOrangeController extends Controller
         };
         $prop['plans'] = Plan::where('active', true)->get();
         $prop['checkout_url'] = "https://wa.me/".$formatPhone($setting['no_whatsapp_admin'])."?text=Saya%20ingin%20berlangganan%20plan%20";
+        $prop['paymentMethod'] = Rekening::where('active', true)->get()->groupBy('type'); 
         $data['prop'] = $prop;
         return Inertia::render('plan',$data);
     }
@@ -86,5 +88,13 @@ class JustOrangeController extends Controller
     public function stopPage()
     {
         return Inertia::render('alert', ['message' => 'Anda tidak diizinkan mengakses layanan ini. Silakan hubungi dukungan pelanggan untuk informasi lebih lanjut.']);
+    }
+    public function invoicePage(Request $request)
+    {
+        $prop['invoice'] = $request->invoice;
+        $prop['order'] = \App\Models\Order::where('invoice',$request->invoice)->first();
+        $prop['rekening'] = Rekening::where('active', true)->where('type',$prop['order']->payment_method)->get();
+        $data['prop'] = $prop;
+        return Inertia::render('invoice',$data);
     }
 }

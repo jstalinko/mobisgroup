@@ -7,7 +7,7 @@
             Pilih paket langganan yang sesuai dengan kebutuhan Anda untuk mengakses konten premium kami.
         </p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <PlanCard v-for="plan in prop.plans" :key="plan.id" :items="plan" :checkout_url="prop.checkout_url"/>
+            <PlanCard v-for="plan in prop.plans" :key="plan.id" :items="plan" :checkout_url="prop.checkout_url" :payment-method="prop.paymentMethod"/>
         </div>
     </div>
     <MobileNav/>
@@ -21,4 +21,5 @@ import Footer from './components/Footer.vue';
 const props = defineProps({
     prop: Object
 });
+
 </script>

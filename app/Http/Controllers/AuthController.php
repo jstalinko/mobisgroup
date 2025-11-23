@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Plan;
 use App\Models\User;
-use App\Models\UserDevice;
 use Inertia\Inertia;
+use App\Models\Order;
+use App\Models\UserDevice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -103,5 +105,32 @@ class AuthController extends Controller
         auth()->logout();
         @session_destroy();
         return redirect('/');
+    }
+
+    public function checkout(Request $request)
+    {
+        $user = auth()->user();
+        if(!$user){
+           $user_id = null;
+        }else{
+           $user_id = $user->id;
+        }
+        $kodeUniq = rand(100,700);
+        $plan_id = $request->plan_id;
+        $order = new Order();
+        $order->user_id = $user_id;
+        $order->plan_id = $plan_id;
+        $order->price = Plan::find($plan_id)->price;
+        $order->total_amount = ($order->price+$kodeUniq);
+        $order->status = 'pending';
+        $order->payment_method = $request->payment_method ?? 'qris';
+        $order->kode_unik = $kodeUniq;
+        $order->invoice = 'INV-' . strtoupper(uniqid());
+        $order->save();
+        return response()->json([
+            'success' => true,
+            'message' => 'Checkout initiated for plan ID: ' . $plan_id,
+            'redirect' =>url('invoice/'.$order->invoice)
+        ], 200);
     }
 }

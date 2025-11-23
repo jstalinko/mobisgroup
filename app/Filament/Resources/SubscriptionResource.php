@@ -91,8 +91,14 @@ Forms\Components\TextInput::make('subscription_code')
                 Tables\Columns\TextColumn::make('end_at')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->searchable()
+                    ->colors([
+                        'success' => 'active',
+                        'danger' => 'expired',
+                        'warning' => 'canceled',
+                        'secondary' => 'inactive',
+                    ]),
                 Tables\Columns\TextColumn::make('subscription_code')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')

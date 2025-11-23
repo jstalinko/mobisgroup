@@ -34,3 +34,4 @@ Route::group(['prefix' => '/v1/{service}'] , function(){
 });
 
 Route::post('/check-license' , [AuthController::class,'checkLicense'])->middleware('api.session');
+Route::post('/checkout' , [AuthController::class,'checkout']);

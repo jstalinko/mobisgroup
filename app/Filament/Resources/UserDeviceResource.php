@@ -80,6 +80,14 @@ class UserDeviceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('Revoke Devices')
+                        ->action(function (Builder $query) {
+                            $query->update(['revoked' => true]);
+                        })
+                        ->requiresConfirmation()
+                        ->color('danger')
+                        ->deselectRecordsAfterCompletion()
+                        ->icon('heroicon-o-x-circle'),
                 ]),
             ]);
     }

@@ -14,6 +14,13 @@ class ListUserDevices extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Actions\Action::make('Revoke All Devices')
+                ->action(function () {
+                    $this->getTable()->getQuery()->update(['revoked' => true]);
+                })
+                ->requiresConfirmation()
+                ->color('danger')
+                ->icon('heroicon-o-x-circle'),
         ];
     }
 }
