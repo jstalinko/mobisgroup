@@ -207,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Storage } from '../../utils/helpers';
 
@@ -310,4 +310,16 @@ const randomizeTheme = () => {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
 };
+
+onMounted(() => {
+  // Load saved theme
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+
+  // Load user data if available
+  userData.value = Storage.get('mobis_user') || null;
+  subscriptionData.value = Storage.get('mobis_sub') || null;
+});
 </script>
