@@ -123,18 +123,30 @@
         <span class="loading loading-spinner loading-lg text-primary"></span>
       </div>
 
-      <video
-        :ref="el => { if (el) videoRefs[index] = el }"
-        :src="getDefaultVideoUrl(episode)"
-        class="w-full h-full object-cover"
-        controls
-        autoplay
-        loop
-        playsinline
-        preload="auto"
-        @loadstart="handleVideoLoading(index)"
-        @canplay="handleVideoCanPlay(index)"
-      ></video>
+    <!-- Only load video if it's in the loadable range -->
+<video
+  v-if="shouldLoadVideo(index)" 
+  :ref="el => { if (el) videoRefs[index] = el }"
+  :src="getDefaultVideoUrl(episode)"
+  class="w-full h-full object-cover"
+  controls
+  loop
+  playsinline
+  :preload="index === currentIndex ? 'auto' : 'metadata'" 
+  @loadstart="handleVideoLoading(index)"
+  @canplay="handleVideoCanPlay(index)"
+></video>
+
+<!-- ✅ TAMBAHAN: Placeholder untuk video yang belum load -->
+<div 
+  v-else 
+  class="w-full h-full flex items-center justify-center bg-gray-900"
+>
+  <div class="text-center text-white">
+    <span class="mdi mdi-play-circle-outline text-6xl mb-2"></span>
+    <p class="text-sm">Episode {{ index + 1 }}</p>
+  </div>
+</div>
 
           <!-- Episode Info Overlay -->
           <div class="absolute bottom-20 left-4 right-4 text-white">
@@ -281,6 +293,7 @@ const isQualityDrawerOpen = ref(false);
 const scrollTimeout = ref(null);
 const isLoading = ref(true);
 const loadingIndex = ref(new Set());
+const loadRange = ref(2); 
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value]);
 
@@ -292,6 +305,10 @@ const getDefaultVideoUrl = (episode) => {
 const selectEpisode = (index) => {
   currentIndex.value = index;
   currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+};
+const shouldLoadVideo = (index) => {
+  const distance = Math.abs(index - currentIndex.value);
+  return distance <= loadRange.value;
 };
 
 const selectEpisodeMobile = (index) => {
@@ -321,7 +338,7 @@ const selectEpisodeMobile = (index) => {
     if (currentVideo) {
       currentVideo.play().catch(err => console.log('Play error:', err));
     }
-  }, 300);
+  }, 500);
 };
 
 const nextEpisode = () => {
@@ -389,7 +406,7 @@ const handleMobileScroll = (e) => {
         currentVideo.play().catch(err => console.log('Play error:', err));
       }
     }
-  }, 100);
+  }, 300);
 };
 
 // FUNCTION BARU 1

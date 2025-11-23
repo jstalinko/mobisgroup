@@ -125,19 +125,37 @@
             <span class="loading loading-spinner loading-lg text-primary"></span>
           </div>
 
-          <video
-            :ref="el => { if (el) videoRefs[index] = el }"
-            :src="episode.playUrl"
-            :poster="episode.cover"
-            class="w-full h-full object-cover"
-            controls
-            loop
-            playsinline
-            preload="metadata"
-            @loadstart="handleVideoLoading(index)"
-            @loadeddata="handleVideoCanPlay(index)"
-            @play="handleVideoPlay(index)"
-          ></video>
+        <!-- Only load video if it's in the loadable range -->
+<video
+  v-if="shouldLoadVideo(index)"
+  :ref="el => { if (el) videoRefs[index] = el }"
+  :src="episode.playUrl"
+  :poster="episode.cover"
+  class="w-full h-full object-cover"
+  controls
+  loop
+  playsinline
+  :preload="index === currentIndex ? 'auto' : 'metadata'"
+  @loadstart="handleVideoLoading(index)"
+  @loadeddata="handleVideoCanPlay(index)"
+  @play="handleVideoPlay(index)"
+></video>
+
+<!-- Placeholder for videos that haven't loaded yet -->
+<div 
+  v-else 
+  class="w-full h-full flex items-center justify-center bg-gray-900"
+  :style="{ backgroundImage: episode.cover ? `url(${episode.cover})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }"
+>
+  <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+    <div class="text-center text-white">
+      <span class="mdi mdi-play-circle-outline text-6xl mb-2"></span>
+      <p class="text-lg font-bold">Episode {{ episode.episode }} | {{ dramaDetail?.title }}</p>
+      <p v-if="episode.isVip" class="text-sm mt-1">👑 VIP</p>
+      <p v-if="episode.isLocked" class="text-sm mt-1">🔒 Locked</p>
+    </div>
+  </div>
+</div>
 
           <!-- Episode Info Overlay -->
           <div class="absolute bottom-20 left-4 right-4 text-white">
@@ -235,6 +253,7 @@ const isEpisodeDrawerOpen = ref(false);
 const scrollTimeout = ref(null);
 const isLoading = ref(true);
 const loadingIndex = ref(new Set());
+const loadRange = ref(2)
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value]);
 
@@ -277,7 +296,12 @@ const selectEpisodeMobile = (index) => {
     if (currentVideo) {
       currentVideo.play().catch(err => console.log('Play error:', err));
     }
-  }, 500);
+  }, 600  );
+};
+
+const shouldLoadVideo = (index) => {
+  const distance = Math.abs(index - currentIndex.value);
+  return distance <= loadRange.value;
 };
 
 const nextEpisode = () => {
