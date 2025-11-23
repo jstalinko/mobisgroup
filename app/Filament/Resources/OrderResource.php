@@ -2,16 +2,20 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OrderResource\Pages;
-use App\Filament\Resources\OrderResource\RelationManagers;
-use App\Models\Order;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use App\Models\User;
 use Filament\Tables;
+use App\Models\Order;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Models\Subscription;
+use Filament\Resources\Resource;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use App\Filament\Resources\OrderResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\OrderResource\RelationManagers;
 
 class OrderResource extends Resource
 {
@@ -89,11 +93,49 @@ class OrderResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+          ->bulkActions([
+    Tables\Actions\BulkActionGroup::make([
+        Tables\Actions\DeleteBulkAction::make(),
+        Tables\Actions\BulkAction::make('Mark as Paid')
+            ->action(function (Collection $records) {
+                $message = "";
+               // dd($records);
+                
+                foreach($records as $order) {
+                    if($order->status === 'paid') {
+                        $message .= "Order ID: " . $order->id . " is already marked as paid.\n";
+                        continue;
+                    }
+                    // Update status to paid
+                    $order->update(['status' => 'paid']);
+                    
+                    $plan_id = $order->plan_id;
+                    $user_id = $order->user_id ?? null;
+                    
+                    if($user_id == null) {
+                        $user = User::makeRandomuser();
+                        $order->update(['user_id' => $user->id]);
+                    } else {
+                        $user = User::find($user_id);
+                    }
+                    
+                    $sub = Subscription::makeSubscription($user->id, $plan_id, $order->price);
+                    $message .= "Created subscription ID: " . $sub->id . " for Order ID: " . $order->id . "\n";
+                }
+
+                // Show notification
+                Notification::make()
+                    ->title('Orders Updated Successfully')
+                    ->body($message)
+                    ->success()
+                    ->send();
+            })
+            ->deselectRecordsAfterCompletion()
+            ->requiresConfirmation()
+            ->color('success')
+            ->icon('heroicon-o-check-circle'),
+    ]),
+]);
     }
 
     public static function getRelations(): array

@@ -58,4 +58,38 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(UserDevice::class);
     }
+    public static function makeRandomuser()
+    {
+        $setting = json_decode(file_get_contents(storage_path('app/settings.json')), true);
+        $faker = fake();
+        $username = str()->slug($faker->userName() . rand(100, 999));
+        $domain = ltrim( str_replace(['http://', 'https://', 'www.'], '', $setting['site_url']),'/');
+
+        $email = $username . '@' . $domain;
+        $password = bcrypt('password123');
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $prefix = strtoupper(substr($domain, 0, 4));
+
+        $segments = [];
+        for ($i = 0; $i < 4; $i++) {
+            $seg = '';
+            for ($j = 0; $j < 4; $j++) {
+                $seg .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+            $segments[] = $seg;
+        }
+
+        $licenseKey = $prefix . '-' . implode('-', $segments);
+
+        // 5. Buat user baru
+        $user = User::create([
+            'name' => $username,
+            'username' => $username,
+            'email' => $email,
+            'password' => $password,
+            'license_key' => $licenseKey,
+        ]);
+
+        return $user;
+    }
 }
