@@ -94,18 +94,19 @@
       </button>
 
       <!-- Profile -->
-      <button v-if="userData != null && subscriptionData != null"
+     
+      <button :class="{ 'text-primary scale-110': activeMenu == 'profile' }"
+        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py1"
+        @click="router.visit('/login')"
+        v-if="userData == null && subscriptionData == null">
+        <span class="mdi mdi-login text-xl"></span>
+        <span class="text-[9px] font-medium">LogIn</span>
+      </button>
+       <button v-else
         :class="{ 'text-primary scale-110': activeMenu === 'profile' }" @click="handleMenuClick('profile')"
         class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py-1">
         <span class="mdi mdi-account text-xl"></span>
         <span class="text-[9px] font-medium">Profile</span>
-      </button>
-      <button :class="{ 'text-primary scale-110': activeMenu == 'profile' }"
-        class="flex flex-col items-center gap-0.5 transition-all duration-200 hover:scale-105 active:scale-95 px-2 py1"
-        @click="router.visit('/login')"
-        v-else>
-        <span class="mdi mdi-login text-xl"></span>
-        <span class="text-[9px] font-medium">LogIn</span>
       </button>
 
     </div>
