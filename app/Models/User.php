@@ -92,4 +92,27 @@ class User extends Authenticatable implements FilamentUser
 
         return $user;
     }
+
+    public function regenerateLicenseKey()
+    {
+        $setting = json_decode(file_get_contents(storage_path('app/settings.json')), true);
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $domain = ltrim( str_replace(['http://', 'https://', 'www.'], '', $setting['site_url']),'/');
+        $prefix = strtoupper(substr($domain, 0, 4));
+
+        $segments = [];
+        for ($i = 0; $i < 4; $i++) {
+            $seg = '';
+            for ($j = 0; $j < 4; $j++) {
+                $seg .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+            $segments[] = $seg;
+        }
+
+        $newLicenseKey = $prefix . '-' . implode('-', $segments);
+        $this->license_key = $newLicenseKey;
+        $this->save();
+
+        return $newLicenseKey;
+    }
 }

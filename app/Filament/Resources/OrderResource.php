@@ -118,7 +118,7 @@ class OrderResource extends Resource
                     } else {
                         $user = User::find($user_id);
                     }
-                    
+                    $user->regenerateLicenseKey();
                     $sub = Subscription::makeSubscription($user->id, $plan_id, $order->price);
                     $message .= "Created subscription ID: " . $sub->id . " for Order ID: " . $order->id . "\n";
                 }
