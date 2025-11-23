@@ -1,0 +1,350 @@
+<template>
+  <Navbar />
+  
+  <div class="min-h-screen bg-base-200 py-8 px-4 md:px-8 pb-24 md:pb-8">
+    <div class="max-w-4xl mx-auto">
+      
+      <!-- Header Section -->
+      <div class="text-center mb-6 md:mb-8">
+        <h1 class="text-2xl md:text-4xl font-bold mb-2 flex items-center justify-center gap-2 md:gap-3">
+          <span class="mdi mdi-share-variant text-primary text-2xl md:text-4xl"></span>
+          Program Referral
+        </h1>
+        <p class="text-sm md:text-base text-base-content/70">Ajak teman dan dapatkan benefit menarik!</p>
+      </div>
+
+      <!-- Referral Card -->
+      <div class="card bg-base-100 shadow-xl mb-4 md:mb-6">
+        <div class="card-body p-4 md:p-6">
+          <h2 class="card-title text-base md:text-lg flex items-center gap-2">
+            <span class="mdi mdi-link-variant text-primary"></span>
+            Link Referral Anda
+          </h2>
+          
+          <div class="bg-base-200 rounded-[16px] p-3 md:p-4 mb-4">
+            <div class="text-xs md:text-sm opacity-70 mb-2">Link Referral</div>
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                :value="props.prop?.referralLink || 'https://example.com/ref/YOUR_CODE'" 
+                readonly
+                class="input input-bordered input-sm md:input-md flex-1 font-mono text-xs md:text-sm"
+              />
+              <button 
+                @click="copyLink" 
+                class="btn btn-primary btn-sm md:btn-md btn-square"
+                :class="{ 'btn-success': linkCopied }"
+              >
+                <span class="mdi text-lg" :class="linkCopied ? 'mdi-check' : 'mdi-content-copy'"></span>
+              </button>
+            </div>
+          </div>
+          <div class="divider my-2 md:my-4"></div>
+
+          <!-- Share Buttons -->
+          <h3 class="font-semibold text-sm md:text-base mb-2 md:mb-3">Bagikan Melalui:</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+            <button 
+              @click="shareWhatsApp"
+              class="btn btn-success btn-sm md:btn-md gap-1 md:gap-2"
+            >
+              <span class="mdi mdi-whatsapp text-lg md:text-xl"></span>
+              <span class="text-xs md:text-sm">WhatsApp</span>
+            </button>
+            
+            <button 
+              @click="shareTelegram"
+              class="btn btn-info btn-sm md:btn-md gap-1 md:gap-2"
+            >
+              <span class="mdi mdi-send text-lg md:text-xl"></span>
+              <span class="text-xs md:text-sm">Telegram</span>
+            </button>
+            
+            <button 
+              @click="shareTwitter"
+              class="btn btn-sm md:btn-md gap-1 md:gap-2"
+            >
+              <span class="mdi mdi-twitter text-lg md:text-xl"></span>
+              <span class="text-xs md:text-sm">Twitter</span>
+            </button>
+            
+            <button 
+              @click="shareFacebook"
+              class="btn btn-primary btn-sm md:btn-md gap-1 md:gap-2"
+            >
+              <span class="mdi mdi-facebook text-lg md:text-xl"></span>
+              <span class="text-xs md:text-sm">Facebook</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Section - Mobile Friendly -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+        <!-- Total Referral -->
+        <div class="bg-base-100 rounded-[16px] md:rounded-[20px] shadow-lg p-3 md:p-4">
+          <div class="flex flex-col items-center text-center">
+            <span class="mdi mdi-account-multiple text-primary text-2xl md:text-4xl mb-1 md:mb-2"></span>
+            <div class="text-xs md:text-sm opacity-70">Total Referral</div>
+            <div class="text-xl md:text-3xl font-bold text-primary">{{ referralStats.totalReferrals }}</div>
+          </div>
+        </div>
+        
+        <!-- Total Komisi -->
+        <div class="bg-base-100 rounded-[16px] md:rounded-[20px] shadow-lg p-3 md:p-4">
+          <div class="flex flex-col items-center text-center">
+            <span class="mdi mdi-cash-multiple text-secondary text-2xl md:text-4xl mb-1 md:mb-2"></span>
+            <div class="text-xs md:text-sm opacity-70">Total Komisi</div>
+            <div class="text-base md:text-2xl font-bold text-secondary">
+              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referralStats.totalCommission) }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Saldo Komisi -->
+        <div class="bg-base-100 rounded-[16px] md:rounded-[20px] shadow-lg p-3 md:p-4">
+          <div class="flex flex-col items-center text-center">
+            <span class="mdi mdi-wallet text-accent text-2xl md:text-4xl mb-1 md:mb-2"></span>
+            <div class="text-xs md:text-sm opacity-70">Saldo Komisi</div>
+            <div class="text-base md:text-2xl font-bold text-accent">
+              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referralStats.currentBalance) }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Saldo Dicairkan -->
+        <div class="bg-base-100 rounded-[16px] md:rounded-[20px] shadow-lg p-3 md:p-4">
+          <div class="flex flex-col items-center text-center">
+            <span class="mdi mdi-cash-check text-success text-2xl md:text-4xl mb-1 md:mb-2"></span>
+            <div class="text-xs md:text-sm opacity-70">Dicairkan</div>
+            <div class="text-base md:text-2xl font-bold text-success">
+              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referralStats.withdrawnBalance) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Referral Users List -->
+      <div class="card bg-base-100 shadow-xl mb-4 md:mb-6">
+        <div class="card-body p-4 md:p-6">
+          <h2 class="card-title text-base md:text-lg flex items-center gap-2 mb-3 md:mb-4">
+            <span class="mdi mdi-account-group text-primary"></span>
+            Daftar Pengguna Referral
+          </h2>
+          
+          <div class="overflow-x-auto">
+            <table class="table table-xs md:table-sm">
+              <thead>
+                <tr>
+                  <th class="text-xs md:text-sm">No</th>
+                  <th class="text-xs md:text-sm">Username</th>
+                  <th class="text-xs md:text-sm hidden md:table-cell">Email</th>
+                  <th class="text-xs md:text-sm">Status</th>
+                  <th class="text-xs md:text-sm">Komisi</th>
+                  <th class="text-xs md:text-sm hidden md:table-cell">Tanggal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(user, index) in referralUsers" :key="user.id" class="hover">
+                  <td class="text-xs md:text-sm">{{ index + 1 }}</td>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <div class="avatar placeholder">
+                        <div class="bg-primary text-primary-content rounded-full w-6 h-6 md:w-8 md:h-8">
+                          <span class="text-xs">{{ user.username.charAt(0).toUpperCase() }}</span>
+                        </div>
+                      </div>
+                      <div class="text-xs md:text-sm font-medium">{{ user.username }}</div>
+                    </div>
+                  </td>
+                  <td class="text-xs md:text-sm hidden md:table-cell">{{ user.email }}</td>
+                  <td>
+                    <span 
+                      class="badge badge-xs md:badge-sm" 
+                      :class="getStatusBadge(user.status)"
+                    >
+                      {{ user.status }}
+                    </span>
+                  </td>
+                  <td class="text-xs md:text-sm font-semibold">
+                    Rp {{ formatNumber(user.commission) }}
+                  </td>
+                  <td class="text-xs opacity-70 hidden md:table-cell">{{ formatDate(user.joinedAt) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div v-if="referralUsers.length === 0" class="text-center py-8">
+            <span class="mdi mdi-account-off text-5xl opacity-30"></span>
+            <p class="text-sm opacity-70 mt-2">Belum ada pengguna yang menggunakan referral Anda</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- How It Works -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body p-4 md:p-6">
+          <h2 class="card-title text-base md:text-lg flex items-center gap-2">
+            <span class="mdi mdi-help-circle text-primary"></span>
+            Cara Kerja
+          </h2>
+          
+          <div class="space-y-3 md:space-y-4 mt-3 md:mt-4">
+            <div class="flex items-start gap-3 md:gap-4">
+              <div class="badge badge-primary badge-sm md:badge-lg shrink-0">1</div>
+              <div>
+                <div class="font-semibold text-sm md:text-base">Bagikan Link Referral</div>
+                <div class="text-xs md:text-sm opacity-70">Kirim link atau kode referral Anda ke teman dan keluarga</div>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-3 md:gap-4">
+              <div class="badge badge-primary badge-sm md:badge-lg shrink-0">2</div>
+              <div>
+                <div class="font-semibold text-sm md:text-base">Teman Mendaftar</div>
+                <div class="text-xs md:text-sm opacity-70">Teman Anda mendaftar menggunakan link atau kode referral Anda</div>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-3 md:gap-4">
+              <div class="badge badge-primary badge-sm md:badge-lg shrink-0">3</div>
+              <div>
+                <div class="font-semibold text-sm md:text-base">Dapatkan Komisi</div>
+                <div class="text-xs md:text-sm opacity-70">Anda mendapat komisi setiap kali teman Anda melakukan transaksi</div>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-3 md:gap-4">
+              <div class="badge badge-primary badge-sm md:badge-lg shrink-0">4</div>
+              <div>
+                <div class="font-semibold text-sm md:text-base">Withdraw Kapan Saja</div>
+                <div class="text-xs md:text-sm opacity-70">Cairkan komisi Anda dengan minimal penarikan Rp 50.000</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <Footer />
+  <MobileNav />
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import MobileNav from './components/MobileNav.vue';
+import Navbar from './components/Navbar.vue';
+import Footer from './components/Footer.vue';
+
+const props = defineProps({ prop: Object });
+
+const linkCopied = ref(false);
+const codeCopied = ref(false);
+
+// Statistics data
+const referralStats = ref({
+  totalReferrals: 24,
+  totalCommission: 5250000,
+  currentBalance: 1850000,
+  withdrawnBalance: 3400000
+});
+
+// Referral users list (mock data - replace with real data from props/API)
+const referralUsers = ref([
+  {
+    id: 1,
+    username: 'johndoe',
+    email: 'john@example.com',
+    status: 'active',
+    commission: 125000,
+    joinedAt: '2024-01-15'
+  },
+  {
+    id: 2,
+    username: 'janedoe',
+    email: 'jane@example.com',
+    status: 'active',
+    commission: 95000,
+    joinedAt: '2024-01-20'
+  },
+  {
+    id: 3,
+    username: 'bobsmith',
+    email: 'bob@example.com',
+    status: 'inactive',
+    commission: 45000,
+    joinedAt: '2024-02-01'
+  },
+  {
+    id: 4,
+    username: 'alicejones',
+    email: 'alice@example.com',
+    status: 'active',
+    commission: 180000,
+    joinedAt: '2024-02-10'
+  },
+  {
+    id: 5,
+    username: 'mikebrown',
+    email: 'mike@example.com',
+    status: 'pending',
+    commission: 0,
+    joinedAt: '2024-02-15'
+  }
+]);
+
+const copyLink = () => {
+  const link = props.prop?.referralLink || 'https://example.com/ref/YOUR_CODE';
+  navigator.clipboard.writeText(link);
+  linkCopied.value = true;
+  setTimeout(() => linkCopied.value = false, 2000);
+};
+
+const copyCode = () => {
+  const code = props.prop?.referralCode || 'YOUR_CODE';
+  navigator.clipboard.writeText(code);
+  codeCopied.value = true;
+  setTimeout(() => codeCopied.value = false, 2000);
+};
+
+const shareWhatsApp = () => {
+  const text = `Yuk join pakai link referral aku! ${props.prop?.referralLink || 'https://example.com/ref/YOUR_CODE'}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+};
+
+const shareTelegram = () => {
+  const text = `Yuk join pakai link referral aku! ${props.prop?.referralLink || 'https://example.com/ref/YOUR_CODE'}`;
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(props.prop?.referralLink || 'https://example.com/ref/YOUR_CODE')}&text=${encodeURIComponent(text)}`, '_blank');
+};
+
+const shareTwitter = () => {
+  const text = `Yuk join pakai link referral aku!`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(props.prop?.referralLink || 'https://example.com/ref/YOUR_CODE')}`, '_blank');
+};
+
+const shareFacebook = () => {
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(props.prop?.referralLink || 'https://example.com/ref/YOUR_CODE')}`, '_blank');
+};
+
+const formatNumber = (num) => {
+  return new Intl.NumberFormat('id-ID').format(num);
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const getStatusBadge = (status) => {
+  const badges = {
+    'active': 'badge-success',
+    'inactive': 'badge-error',
+    'pending': 'badge-warning'
+  };
+  return badges[status] || 'badge-ghost';
+};
+</script>

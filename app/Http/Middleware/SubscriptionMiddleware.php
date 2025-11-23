@@ -151,6 +151,7 @@ class SubscriptionMiddleware
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 'status' => false,
+                'success' => false,
                 'message' => $message
             ], $status);
         }
@@ -159,6 +160,7 @@ class SubscriptionMiddleware
             return redirect()->route($redirect)->withErrors(['error' => $message]);
         }
 
+        
         return back()->withErrors(['error' => $message]);
     }
 }

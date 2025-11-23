@@ -30,3 +30,4 @@ Route::get('/blocked',[JustOrangeController::class,'blockedPage'])->name('blocke
 Route::get('/invoice/{invoice}',[JustOrangeController::class,'invoicePage'])->name('invoice');
 Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonService']);
 Route::get('/stop',[JustOrangeController::class,'stopPage'])->name('stop');
+Route::get('/referral',[JustOrangeController::class,'referralPage'])->name('referral');

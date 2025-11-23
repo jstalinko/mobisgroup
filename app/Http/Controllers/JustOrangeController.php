@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\MetaSetting;
 use Illuminate\Http\Request;
 use App\Interfaces\MovieServiceInterface;
+use App\Models\Referral;
 use App\Models\Rekening;
 
 class JustOrangeController extends Controller
@@ -96,5 +97,16 @@ class JustOrangeController extends Controller
         $prop['rekening'] = Rekening::where('active', true)->where('type',$prop['order']->payment_method)->get();
         $data['prop'] = $prop;
         return Inertia::render('invoice',$data);
+    }
+
+    public function referralPage()
+    {
+        $user = auth()->user();
+        $prop['referralCode'] = $user->name;
+        $setting = json_decode(\Illuminate\Support\Facades\Storage::get('settings.json'), true);
+        $prop['referralLink'] = url('/plan?ref=') . $user->name;
+        $prop['referrals'] = Referral::where('user_id', $user->id)->with('referredUser')->get();
+        $data['prop'] = $prop;
+        return Inertia::render('referral', $data);
     }
 }

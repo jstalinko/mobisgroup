@@ -24,4 +24,8 @@ class Referral extends Model
     {
         return $this->belongsTo(Plan::class);
     }
+    public function referredUser()
+    {
+        return $this->belongsTo(User::class, 'referred_user_id');
+    }
 }
