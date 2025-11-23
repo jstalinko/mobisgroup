@@ -240,7 +240,8 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail, getTheaterDetail } from '../../utils/api';
 
 const props = defineProps({
-  bookId: String
+  bookId: String,
+  episode: String
 });
 
 const dramaDetail = ref(null);
@@ -257,6 +258,16 @@ const loadRange = ref(2)
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value]);
 
+
+const updateURL = (episodeNum) => {
+  const pathParts = window.location.pathname.split('/');
+  const bookIdIndex = pathParts.findIndex(part => part === props.bookId);
+  if (bookIdIndex !== -1 && pathParts[bookIdIndex + 1]) {
+    pathParts[bookIdIndex + 1] = episodeNum.toString();
+    const newPath = pathParts.join('/');
+    window.history.pushState({}, '', newPath);
+  }
+};
 // Fungsi untuk pause semua video kecuali yang aktif
 const pauseAllVideosExcept = (activeIndex) => {
   videoRefs.value.forEach((video, index) => {
@@ -271,16 +282,16 @@ const selectEpisode = (index) => {
   if (videoPlayer.value) {
     videoPlayer.value.load();
   }
+  updateURL(episodes.value[index].episode); 
 };
-
 const selectEpisodeMobile = (index) => {
-  // Pause semua video terlebih dahulu
   pauseAllVideosExcept(-1);
   
   currentIndex.value = index;
   isEpisodeDrawerOpen.value = false;
   
-  // Scroll ke episode
+  updateURL(episodes.value[index].episode); // ⬅️ TAMBAHKAN BARIS INI
+  
   const container = mobileContainer.value;
   if (container) {
     container.scrollTo({
@@ -289,14 +300,13 @@ const selectEpisodeMobile = (index) => {
     });
   }
   
-  // Auto play setelah scroll selesai
   setTimeout(() => {
     pauseAllVideosExcept(index);
     const currentVideo = videoRefs.value[index];
     if (currentVideo) {
       currentVideo.play().catch(err => console.log('Play error:', err));
     }
-  }, 600  );
+  }, 600);
 };
 
 const shouldLoadVideo = (index) => {
@@ -391,6 +401,7 @@ watch(currentIndex, (newIndex) => {
   pauseAllVideosExcept(newIndex);
 });
 
+// DARI INI:
 onMounted(async () => {
   try {
     const response = await getChapterDetail(props.bookId);
@@ -399,6 +410,60 @@ onMounted(async () => {
     dramaDetail.value = detailResponse?.data || null;
   } catch (error) {
     console.error('Error loading episodes:', error);
+  }
+});
+
+// JADI INI ⬇️:
+onMounted(async () => {
+  try {
+    const response = await getChapterDetail(props.bookId);
+    episodes.value = response?.data?.episodes || [];
+    const detailResponse = await getTheaterDetail(props.bookId);
+    dramaDetail.value = detailResponse?.data || null;
+    
+    // ⬇️ TAMBAHAN BARU
+    if (episodes.value.length > 0) {
+      const episodeNum = parseInt(props.episode) || 1;
+      const episodeIndex = episodes.value.findIndex(ep => ep.episode === episodeNum);
+      
+      if (episodeIndex !== -1) {
+        currentIndex.value = episodeIndex;
+      } else {
+        currentIndex.value = 0;
+      }
+      
+      if (mobileContainer.value) {
+        setTimeout(() => {
+          mobileContainer.value.scrollTo({
+            top: currentIndex.value * window.innerHeight,
+            behavior: 'auto'
+          });
+        }, 100);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading episodes:', error);
+  }
+});
+watch(() => props.episode, (newEpisode) => {
+  if (newEpisode && episodes.value.length > 0) {
+    const episodeNum = parseInt(newEpisode);
+    const episodeIndex = episodes.value.findIndex(ep => ep.episode === episodeNum);
+    
+    if (episodeIndex !== -1 && episodeIndex !== currentIndex.value) {
+      currentIndex.value = episodeIndex;
+      
+      if (mobileContainer.value) {
+        mobileContainer.value.scrollTo({
+          top: episodeIndex * window.innerHeight,
+          behavior: 'smooth'
+        });
+      }
+      
+      if (videoPlayer.value) {
+        videoPlayer.value.load();
+      }
+    }
   }
 });
 

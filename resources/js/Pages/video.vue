@@ -16,7 +16,6 @@ console.log(service.value);
   <div class="min-h-screen bg-base-100">
     <Navbar />
     <div v-if="service === 'netshort'">
-      netshort bos
       <NetshortVideoPlayer :bookId="prop.bookId" :episode="prop.episode"/>
     </div>
     <div v-else>
