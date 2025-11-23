@@ -256,10 +256,11 @@ import { ref } from 'vue';
 import MobileNav from './components/MobileNav.vue';
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
-
+import {siteSetting} from '../utils/helpers';
 const props = defineProps({prop:Object});
 const order =ref(props.prop.order || {});
 const rekening = ref(props.prop.rekening || null);
+const setting = siteSetting();
 const formatNumber = (number) => {
   return new Intl.NumberFormat('id-ID').format(number);
 };
@@ -287,23 +288,31 @@ const formatDate = (dateString) => {
 };
 
 const confirmPayment = () => {
-  // Handle payment confirmation
-  console.log('Confirm payment for order:', props.order.invoice);
-  // You can add API call here to confirm payment
+ const phoneNumber = setting.no_whatsapp_admin.replace(/[^0-9+]/g, '');
+  
+  // Create WhatsApp message
+  const message = `Halo Admin, saya sudah melakukan pembayaran untuk:\n\n` +
+    `Invoice: ${order.value.invoice}\n` +
+    `Paket: ${order.value.plan?.name || '-'}\n` +
+    `Total: Rp ${formatNumber(order.value.total_amount)}\n\n` +
+    `Mohon untuk dikonfirmasi. Terima kasih.`;
+  
+  // Encode message for URL
+  const encodedMessage = encodeURIComponent(message);
+  
+  // Redirect to WhatsApp
+  window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
 };
 
 const downloadInvoice = () => {
-  // Handle invoice download
-  console.log('Download invoice:', props.order.invoice);
-  // You can add API call here to generate PDF
+  
   window.print();
 };
 
 const cancelOrder = () => {
   // Handle order cancellation
   if (confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
-    console.log('Cancel order:', props.order.invoice);
-    // You can add API call here to cancel order
+
   }
 };
 
