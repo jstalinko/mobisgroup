@@ -86,7 +86,7 @@
           <div class="flex flex-col items-center text-center">
             <span class="mdi mdi-account-multiple text-primary text-2xl md:text-4xl mb-1 md:mb-2"></span>
             <div class="text-xs md:text-sm opacity-70">Total Referral</div>
-            <div class="text-xl md:text-3xl font-bold text-primary">{{ referralStats.totalReferrals }}</div>
+            <div class="text-xl md:text-3xl font-bold text-primary">{{ referral.totalReferrals }}</div>
           </div>
         </div>
         
@@ -96,7 +96,7 @@
             <span class="mdi mdi-cash-multiple text-secondary text-2xl md:text-4xl mb-1 md:mb-2"></span>
             <div class="text-xs md:text-sm opacity-70">Total Komisi</div>
             <div class="text-base md:text-2xl font-bold text-secondary">
-              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referralStats.totalCommission) }}
+              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referral.totalCommission) }}
             </div>
           </div>
         </div>
@@ -107,7 +107,7 @@
             <span class="mdi mdi-wallet text-accent text-2xl md:text-4xl mb-1 md:mb-2"></span>
             <div class="text-xs md:text-sm opacity-70">Saldo Komisi</div>
             <div class="text-base md:text-2xl font-bold text-accent">
-              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referralStats.currentBalance) }}
+              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referral.availableCommission) }}
             </div>
           </div>
         </div>
@@ -118,14 +118,48 @@
             <span class="mdi mdi-cash-check text-success text-2xl md:text-4xl mb-1 md:mb-2"></span>
             <div class="text-xs md:text-sm opacity-70">Dicairkan</div>
             <div class="text-base md:text-2xl font-bold text-success">
-              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referralStats.withdrawnBalance) }}
+              <span class="text-xs md:text-sm">Rp</span> {{ formatNumber(referral.withdrawnCommission) }}
             </div>
           </div>
         </div>
       </div>
 
       <!-- Referral Users List -->
+    <!-- Tabs Navigation -->
       <div class="card bg-base-100 shadow-xl mb-4 md:mb-6">
+        <div role="tablist" class="tabs tabs-boxed tabs-lg">
+          <a 
+            role="tab" 
+            class="tab text-xs md:text-sm"
+            :class="{ 'tab-active': activeTab === 'users' }"
+            @click="activeTab = 'users'"
+          >
+            <span class="mdi mdi-account-group mr-1 md:mr-2"></span>
+            Referral User
+          </a>
+          <a 
+            role="tab" 
+            class="tab text-xs md:text-sm"
+            :class="{ 'tab-active': activeTab === 'earnings' }"
+            @click="activeTab = 'earnings'"
+          >
+            <span class="mdi mdi-currency-usd mr-1 md:mr-2"></span>
+            Pendapatan Referral
+          </a>
+          <a 
+            role="tab" 
+            class="tab text-xs md:text-sm"
+            :class="{ 'tab-active': activeTab === 'withdraw' }"
+            @click="activeTab = 'withdraw'"
+          >
+            <span class="mdi mdi-bank-transfer mr-1 md:mr-2"></span>
+            Tarik Komisi
+          </a>
+        </div>
+      </div>
+
+      <!-- Tab Content: Referral Users List -->
+      <div v-show="activeTab === 'users'" class="card bg-base-100 shadow-xl mb-4 md:mb-6">
         <div class="card-body p-4 md:p-6">
           <h2 class="card-title text-base md:text-lg flex items-center gap-2 mb-3 md:mb-4">
             <span class="mdi mdi-account-group text-primary"></span>
@@ -183,6 +217,97 @@
         </div>
       </div>
 
+      <!-- Tab Content: Pendapatan Referral -->
+      <div v-show="activeTab === 'earnings'" class="card bg-base-100 shadow-xl mb-4 md:mb-6">
+        <div class="card-body p-4 md:p-6">
+          <h2 class="card-title text-base md:text-lg flex items-center gap-2 mb-3 md:mb-4">
+            <span class="mdi mdi-currency-usd text-primary"></span>
+            Riwayat Pendapatan
+          </h2>
+          
+          <!-- Content untuk tab Pendapatan Referral -->
+          <div class="text-center py-8">
+            <span class="mdi mdi-chart-line text-5xl opacity-30"></span>
+            <p class="text-sm opacity-70 mt-2">Konten pendapatan referral</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Tarik Komisi -->
+      <div v-show="activeTab === 'withdraw'" class="card bg-base-100 shadow-xl mb-4 md:mb-6">
+        <div class="card-body p-4 md:p-6">
+          <h2 class="card-title text-base md:text-lg flex items-center gap-2 mb-3 md:mb-4">
+            <span class="mdi mdi-bank-transfer text-primary"></span>
+            Penarikan Komisi
+          </h2>
+          <div>
+            <form class="space-y-4">
+              <div>
+                <label class="label">
+                  <span class="label-text text-xs md:text-sm">Jumlah Penarikan (Rp)</span>
+                </label>
+                <input 
+                  type="number" 
+                  min="50000"
+                  class="input input-bordered w-full input-sm md:input-md text-xs md:text-sm" 
+                  placeholder="Masukkan jumlah penarikan minimal Rp 50.000"
+                />
+                <label class="label">
+                  <span class="label-text-alt text-xs md:text-sm">Saldo Komisi Tersedia: Rp {{ formatNumber(referral.availableCommission) }}</span>
+                </label>
+                </div>
+                <div>
+                   <label class="label">
+                  <span class="label-text text-xs md:text-sm">Nama Bank / E-Wallet</span>
+                </label>
+                <input 
+                  type="text" 
+                  class="input input-bordered w-full input-sm md:input-md text-xs md:text-sm" 
+                  placeholder="Masukkan Nama bank ( Cth: BCA, OVO, DANA )"
+                />
+                </div>
+                <div>
+                   <label class="label">
+                  <span class="label-text text-xs md:text-sm">No. Rekening / HP</span>
+                </label>
+                <input 
+                  type="tel" 
+                  class="input input-bordered w-full input-sm md:input-md text-xs md:text-sm" 
+                  placeholder="Masukkan No. Rekening / No. HP"
+                />
+                </div>
+                <div>
+                   <label class="label">
+                  <span class="label-text text-xs md:text-sm">Atas Nama</span>
+                </label>
+                <input 
+                  type="text" 
+                  class="input input-bordered w-full input-sm md:input-md text-xs md:text-sm" 
+                  placeholder="Masukkan atas nama pemilik rekening/e-wallet"
+                />
+                </div>
+                <div>
+                   <label class="label">
+                  <span class="label-text text-xs md:text-sm">No. Whatsapp</span>
+                </label>
+                <input 
+                  type="tel" 
+                  class="input input-bordered w-full input-sm md:input-md text-xs md:text-sm" 
+                  placeholder="Masukkan nomer whatsapp aktif"
+                />
+                </div>
+                <div>
+                  <button 
+                    type="submit" 
+                    class="btn btn-primary w-full btn-sm md:btn-md mt-2"
+                  >
+                    Ajukan Penarikan
+                  </button>
+                </div>
+                </form>
+          </div>
+        </div>
+      </div>
       <!-- How It Works -->
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body p-4 md:p-6">
@@ -244,15 +369,8 @@ const props = defineProps({ prop: Object });
 
 const linkCopied = ref(false);
 const codeCopied = ref(false);
-
-// Statistics data
-const referralStats = ref({
-  totalReferrals: 24,
-  totalCommission: 5250000,
-  currentBalance: 1850000,
-  withdrawnBalance: 3400000
-});
-
+const referral = ref(props.prop || {});
+const activeTab = ref('users');
 // Referral users list (mock data - replace with real data from props/API)
 const referralUsers = ref([
   {

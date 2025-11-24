@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use App\Models\User;
 use Inertia\Inertia;
+use App\Models\Referral;
+use App\Models\Rekening;
 use App\Models\MetaSetting;
 use Illuminate\Http\Request;
 use App\Interfaces\MovieServiceInterface;
-use App\Models\Referral;
-use App\Models\Rekening;
 
 class JustOrangeController extends Controller
 {
@@ -101,11 +102,17 @@ class JustOrangeController extends Controller
 
     public function referralPage()
     {
-        $user = auth()->user();
+        $auth = auth()->user();
+
+        $user = User::find($auth->id);
         $prop['referralCode'] = $user->name;
         $setting = json_decode(\Illuminate\Support\Facades\Storage::get('settings.json'), true);
         $prop['referralLink'] = url('/plan?ref=') . $user->name;
         $prop['referrals'] = Referral::where('user_id', $user->id)->with('referredUser')->get();
+        $prop['totalCommission'] = $user->totalCommission();
+        $prop['availableCommission'] = $user->availableCommission();
+        $prop['withdrawnCommission'] = $user->withdrawnCommission();
+        $prop['totalReferrals'] = $user->referrals()->count();
         $data['prop'] = $prop;
         return Inertia::render('referral', $data);
     }

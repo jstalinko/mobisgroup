@@ -115,4 +115,48 @@ class User extends Authenticatable implements FilamentUser
 
         return $newLicenseKey;
     }
+    // --- Relasi ke Referral (Wajib Ada) ---
+    public function referrals()
+    {
+        return $this->hasMany(Referral::class, 'user_id');
+    }
+    
+    // --- Methods Perhitungan Komisi Baru ---
+
+    /**
+     * Menghitung total komisi yang diperoleh (completed, withdrawn, waiting_payment).
+     */
+    public function totalCommission(): float
+    {
+        $finalStatuses = [
+            'completed', 
+            'withdrawn',
+            'waiting_payment'
+        ];
+        
+        // Memanggil relasi referrals() lalu menerapkan whereIn
+        return $this->referrals()
+                    ->whereIn('status', $finalStatuses)
+                    ->sum('bonus_amount');
+    }
+
+    /**
+     * Menghitung komisi yang tersedia dan belum ditarik (hanya completed).
+     */
+    public function availableCommission(): float
+    {
+        return $this->referrals()
+                    ->where('status', 'completed')
+                    ->sum('bonus_amount');
+    }
+
+    /**
+     * Menghitung total komisi yang sudah ditarik.
+     */
+    public function withdrawnCommission(): float
+    {
+        return $this->referrals()
+                    ->where('status', 'withdrawn')
+                    ->sum('bonus_amount');
+    }
 }
