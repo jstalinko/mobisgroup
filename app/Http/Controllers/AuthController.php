@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
+use App\Models\Referral;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Models\Order;
@@ -109,6 +110,16 @@ class AuthController extends Controller
 
     public function checkout(Request $request)
     {
+        $referralCode = $request->referral_code;
+        if($referralCode){
+            $refUser = User::where('name',$referralCode)->first();
+            if(!$refUser){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kode referral tidak valid.',
+                ], 400);
+            }
+        }
         $user = auth()->user();
         if(!$user){
            $user_id = null;
@@ -126,6 +137,7 @@ class AuthController extends Controller
         $order->payment_method = $request->payment_method ?? 'qris';
         $order->kode_unik = $kodeUniq;
         $order->invoice = 'INV-' . strtoupper(uniqid());
+        $order->referral_code = $referralCode ?? null;
         $order->save();
         return response()->json([
             'success' => true,

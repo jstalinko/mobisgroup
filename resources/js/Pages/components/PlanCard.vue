@@ -124,7 +124,11 @@ const isLoading = ref(false);
 const props = defineProps({
   items: Object,
   checkout_url: String,
-  paymentMethod: Object
+  paymentMethod: Object,
+  referralCode: {
+    type: String,
+    default: null
+  }
 });
 
 const showModal = ref(false);
@@ -154,7 +158,8 @@ const selectPaymentMethod = async (type, method) => {
     body:{
     plan_id: props.items.id,
     payment_type: type,
-    payment_method: type
+    payment_method: type,
+    referral_code: props.referralCode
     }
   });
   if(response.success)

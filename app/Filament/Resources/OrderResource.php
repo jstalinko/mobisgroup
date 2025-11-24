@@ -121,6 +121,21 @@ class OrderResource extends Resource
                     $user->regenerateLicenseKey();
                     $sub = Subscription::makeSubscription($user->id, $plan_id, $order->price);
                     $message .= "Created subscription ID: " . $sub->id . " for Order ID: " . $order->id . "\n";
+
+                    if($order->referral_code){
+                        $plan = \App\Models\Plan::find($plan_id);
+                        $refUser = User::where('name',$order->referral_code)->first();
+                        if($refUser){
+                            $referral = new \App\Models\Referral();
+                            $referral->user_id = $refUser->id;
+                            $referral->referred_user_id = $user->id;
+                            $referral->bonus_amount = $plan->referral_commission;
+                            $referral->plan_id = $plan_id;
+                            $referral->status = 'completed';
+                            $referral->notes = 'Referral bonus order Plan ' . $plan->name;
+                            $referral->save();
+                        }
+                    }
                 }
 
                 // Show notification

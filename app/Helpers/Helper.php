@@ -459,5 +459,10 @@ class Helper
                 return null;
         }
     }
+
+    public static function piwapiWhatsappSend($message,$to)
+    {
+        
+    }
  
 }

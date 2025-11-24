@@ -65,6 +65,7 @@ class JustOrangeController extends Controller
         $prop['plans'] = Plan::where('active', true)->get();
         $prop['checkout_url'] = "https://wa.me/".$formatPhone($setting['no_whatsapp_admin'])."?text=Saya%20ingin%20berlangganan%20plan%20";
         $prop['paymentMethod'] = Rekening::where('active', true)->get()->groupBy('type'); 
+        $prop['referralCode'] = request()->get('ref', null);
         $data['prop'] = $prop;
         return Inertia::render('plan',$data);
     }
