@@ -8,7 +8,7 @@
           <div class="relative aspect-video">
             <video
               ref="videoPlayer"
-              :src="currentEpisode?.playUrl"
+              :src="nginxCacheVideo(currentEpisode?.playUrl)"
               :poster="currentEpisode?.cover"
               class="w-full h-full object-contain"
               controls
@@ -129,7 +129,7 @@
 <video
   v-if="shouldLoadVideo(index)"
   :ref="el => { if (el) videoRefs[index] = el }"
-  :src="episode.playUrl"
+  :src="nginxCacheVideo(episode.playUrl)"
   :poster="episode.cover"
   class="w-full h-full object-cover"
   controls
@@ -238,6 +238,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail, getTheaterDetail } from '../../utils/api';
+import { nginxCacheVideo } from '../../utils/helpers';
 
 const props = defineProps({
   bookId: String,

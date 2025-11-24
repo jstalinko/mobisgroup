@@ -31,3 +31,4 @@ Route::get('/invoice/{invoice}',[JustOrangeController::class,'invoicePage'])->na
 Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonService']);
 Route::get('/stop',[JustOrangeController::class,'stopPage'])->name('stop');
 Route::get('/referral',[JustOrangeController::class,'referralPage'])->name('referral');
+Route::get('/v', fn() => abort(404));

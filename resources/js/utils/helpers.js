@@ -121,3 +121,11 @@ export const generateUUID = () => {
         return (c==='x' ? r : (r&0x3|0x8)).toString(16);
     });
 }
+export const nginxCacheVideo = (url) => {
+    const setting = siteSetting();
+    if(setting.nginx_cache){
+    return 'https://'+setting.site_url+'/v?src='+encodeURIComponent(url);
+    }else{
+        return url;
+    }
+};
