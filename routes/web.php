@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CloakingController;
 use App\Http\Controllers\JustOrangeController;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,15 +34,46 @@ Route::get('/invoice/{invoice}',[JustOrangeController::class,'invoicePage'])->na
 Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonService']);
 Route::get('/stop',[JustOrangeController::class,'stopPage'])->name('stop');
 Route::get('/referral',[JustOrangeController::class,'referralPage'])->name('referral');
+
 Route::get('/v', function(Request $request) {
-    $hash = $request->get('src');
-    $url = base64_decode(urldecode($hash));
-    $stream = fopen($url, 'r');
-    return response()->stream(function() use ($stream) {
-        fpassthru($stream);
-    }, 200, [
+    // 1. Ambil URL lengkap dan decode (URL ini yang mengandung token)
+    // Hasil decode: https://alicdn.netshort.com/o84IjuedBGcCkgfFB3LcVOEIbfADQR3eUnFSYu?a=0&auth_key=...
+    $full_url = urldecode($request->get('src'));
+
+    // 2. Tentukan Kunci Cache Statis
+    // Kita ambil semua string sebelum tanda '?'
+    // Hasilnya: https://alicdn.netshort.com/o84IjuedBGcCkgfFB3LcVOEIbfADQR3eUnFSYu
+    $cache_key_url = Str::before($full_url, '?');
+
+    // 3. Buat Nama File Cache (Hash dari Kunci Statis)
+    // Ini akan menjadi nama file cache yang konsisten.
+    $file_name = 'videos/' . md5($cache_key_url) . '.mp4'; 
+    
+    // Periksa apakah file cache statis sudah ada di storage/app/videos/
+    if (!Storage::disk('local')->exists($file_name)) {
+        
+        // --- Cache Miss: Unduh dan Simpan (Menggunakan $full_url) ---
+        
+        // Gunakan URL LENGKAP ($full_url) untuk mengunduh karena ia membawa 'auth_key'
+        $contents = file_get_contents($full_url); 
+        
+        if ($contents === false) {
+             // Tangani error jika gagal fetch
+             abort(500, 'Failed to fetch video source.');
+        }
+        
+        // Simpan konten menggunakan $file_name (kunci statis)
+        Storage::disk('local')->put($file_name, $contents);
+    }
+    
+    // --- Cache Hit: Stream dari Cache Lokal ---
+    
+    $path = Storage::disk('local')->path($file_name);
+
+    // Stream menggunakan response()->file()
+    return response()->file($path, [
         "Content-Type" => "video/mp4",
-        "Accept-Ranges" => "bytes"
+        "Accept-Ranges" => "bytes",
+        "Cache-Control" => "public, max-age=604800", // Cache 7 hari
     ]);
 });
-
