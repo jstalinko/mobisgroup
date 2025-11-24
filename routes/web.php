@@ -39,7 +39,8 @@ Route::get('/v', function(Request $request) {
     // 1. Ambil URL lengkap dan decode (URL ini yang mengandung token)
     // Hasil decode: https://alicdn.netshort.com/o84IjuedBGcCkgfFB3LcVOEIbfADQR3eUnFSYu?a=0&auth_key=...
     $full_url = urldecode($request->get('src'));
-
+    $serviceName = $request->get('s') ?? 'default';
+    $bookId = $request->get('b') ?? null;
     // 2. Tentukan Kunci Cache Statis
     // Kita ambil semua string sebelum tanda '?'
     // Hasilnya: https://alicdn.netshort.com/o84IjuedBGcCkgfFB3LcVOEIbfADQR3eUnFSYu
@@ -47,7 +48,7 @@ Route::get('/v', function(Request $request) {
 
     // 3. Buat Nama File Cache (Hash dari Kunci Statis)
     // Ini akan menjadi nama file cache yang konsisten.
-    $file_name = 'videos/' . md5($cache_key_url) . '.mp4'; 
+    $file_name = 'videos/'.$serviceName.'/'. md5($cache_key_url) . '_'.$bookId.'.mp4'; 
     
     // Periksa apakah file cache statis sudah ada di storage/app/videos/
     if (!Storage::disk('local')->exists($file_name)) {

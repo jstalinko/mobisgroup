@@ -1,3 +1,5 @@
+import { getService } from "./api";
+
 export function formatCurrency(amount) {
     return new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -121,11 +123,12 @@ export const generateUUID = () => {
         return (c==='x' ? r : (r&0x3|0x8)).toString(16);
     });
 }
-export const nginxCacheVideo = (url) => {
+export const nginxCacheVideo = (url , bookId) => {
     const setting = siteSetting();
+    const service = getService();
     if(setting.nginx_cache){
         const encodeUri = encodeURIComponent(url);
-    return 'https://'+setting.site_url+'/v?src='+encodeUri;
+    return 'https://'+setting.site_url+'/v?src='+encodeUri+'&s='+service+(bookId ? '&b='+bookId : '');
     }else{
         return url;
     }
