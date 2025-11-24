@@ -10,7 +10,7 @@
           <div class="relative aspect-video">
             <video
               ref="videoPlayer"
-              :src="nginxCacheVideo(currentVideoUrl)"
+              :src="nginxCacheVideo(currentVideoUrl,dramaDetail?.id)"
               class="w-full h-full object-contain"
               controls
               @ended="nextEpisode"
@@ -127,7 +127,7 @@
 <video
   v-if="shouldLoadVideo(index)" 
   :ref="el => { if (el) videoRefs[index] = el }"
-  :src="nginxCacheVideo(getDefaultVideoUrl(episode))"
+  :src="nginxCacheVideo(getDefaultVideoUrl(episode) , dramaDetail?.id)"
   class="w-full h-full object-cover"
   controls
   loop

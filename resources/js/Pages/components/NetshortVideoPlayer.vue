@@ -8,7 +8,7 @@
           <div class="relative aspect-video">
             <video
               ref="videoPlayer"
-              :src="nginxCacheVideo(currentEpisode?.playUrl)"
+              :src="nginxCacheVideo(currentEpisode?.playUrl,dramaDetail?.id)"
               :poster="currentEpisode?.cover"
               class="w-full h-full object-contain"
               controls
@@ -129,7 +129,7 @@
 <video
   v-if="shouldLoadVideo(index)"
   :ref="el => { if (el) videoRefs[index] = el }"
-  :src="nginxCacheVideo(episode.playUrl)"
+  :src="nginxCacheVideo(episode.playUrl , dramaDetail?.id)"
   :poster="episode.cover"
   class="w-full h-full object-cover"
   controls

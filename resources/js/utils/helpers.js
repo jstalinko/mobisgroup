@@ -128,7 +128,7 @@ export const nginxCacheVideo = (url , bookId) => {
     const service = getService();
     if(setting.nginx_cache){
         const encodeUri = encodeURIComponent(url);
-    return 'https://'+setting.site_url+'/v?src='+encodeUri+'&s='+service+(bookId ? '&b='+bookId : '');
+    return 'http://'+setting.site_url+'/v?src='+encodeUri+'&s='+service+(bookId ? '&b='+bookId : '');
     }else{
         return url;
     }

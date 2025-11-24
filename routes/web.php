@@ -36,45 +36,30 @@ Route::get('/stop',[JustOrangeController::class,'stopPage'])->name('stop');
 Route::get('/referral',[JustOrangeController::class,'referralPage'])->name('referral');
 
 Route::get('/v', function(Request $request) {
-    // 1. Ambil URL lengkap dan decode (URL ini yang mengandung token)
-    // Hasil decode: https://alicdn.netshort.com/o84IjuedBGcCkgfFB3LcVOEIbfADQR3eUnFSYu?a=0&auth_key=...
+
     $full_url = urldecode($request->get('src'));
     $serviceName = $request->get('s') ?? 'default';
     $bookId = $request->get('b') ?? null;
-    // 2. Tentukan Kunci Cache Statis
-    // Kita ambil semua string sebelum tanda '?'
-    // Hasilnya: https://alicdn.netshort.com/o84IjuedBGcCkgfFB3LcVOEIbfADQR3eUnFSYu
-    $cache_key_url = Str::before($full_url, '?');
 
-    // 3. Buat Nama File Cache (Hash dari Kunci Statis)
-    // Ini akan menjadi nama file cache yang konsisten.
-    $file_name = 'videos/'.$serviceName.'/'. md5($cache_key_url) . '_'.$bookId.'.mp4'; 
-    
-    // Periksa apakah file cache statis sudah ada di storage/app/videos/
+    $cache_key_url = Str::before($full_url, '?');
+    $file_name = 'videos/'.$serviceName.'/'. md5($cache_key_url) . '_' . $bookId . '.mp4'; 
+
     if (!Storage::disk('local')->exists($file_name)) {
-        
-        // --- Cache Miss: Unduh dan Simpan (Menggunakan $full_url) ---
-        
-        // Gunakan URL LENGKAP ($full_url) untuk mengunduh karena ia membawa 'auth_key'
-        $contents = file_get_contents($full_url); 
-        
+
+        $contents = file_get_contents($full_url);
+
         if ($contents === false) {
-             // Tangani error jika gagal fetch
-             abort(500, 'Failed to fetch video source.');
+            abort(500, 'Failed to fetch video source.');
         }
-        
-        // Simpan konten menggunakan $file_name (kunci statis)
+
         Storage::disk('local')->put($file_name, $contents);
     }
-    
-    // --- Cache Hit: Stream dari Cache Lokal ---
-    
-    $path = Storage::disk('local')->path($file_name);
 
-    // Stream menggunakan response()->file()
-    return response()->file($path, [
+    $internal_path = "/protected/videos/" . $serviceName . "/" . md5($cache_key_url) . "_" . $bookId . ".mp4";
+
+    return response("", 200, [
         "Content-Type" => "video/mp4",
+        "X-Accel-Redirect" => $internal_path,
         "Accept-Ranges" => "bytes",
-        "Cache-Control" => "public, max-age=604800", // Cache 7 hari
     ]);
 });
