@@ -19,6 +19,10 @@ class ReferralResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-share';
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -44,20 +48,25 @@ class ReferralResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('user.name')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('bonus_amount')
+                    ->money('IDR')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('referredUser.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('referred_user_id')
+                Tables\Columns\TextColumn::make('plan.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('plan_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->searchable()
+                    ->colors([
+                        'danger' => 'pending',
+                        'success' => 'completed',
+                        'info' => 'withdrawn',
+                        'warning' => 'waiting_payment',
+                    ]),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
