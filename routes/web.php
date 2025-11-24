@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\AuthController;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CloakingController;
 use App\Http\Controllers\JustOrangeController;
 
@@ -31,4 +32,15 @@ Route::get('/invoice/{invoice}',[JustOrangeController::class,'invoicePage'])->na
 Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonService']);
 Route::get('/stop',[JustOrangeController::class,'stopPage'])->name('stop');
 Route::get('/referral',[JustOrangeController::class,'referralPage'])->name('referral');
-Route::get('/v', fn() => abort(404));
+Route::get('/v', function(Request $request) {
+    $hash = $request->get('src');
+    $url = base64_decode($hash);
+    $stream = fopen($url, 'r');
+    return response()->stream(function() use ($stream) {
+        fpassthru($stream);
+    }, 200, [
+        "Content-Type" => "video/mp4",
+        "Accept-Ranges" => "bytes"
+    ]);
+});
+
