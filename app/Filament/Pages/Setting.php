@@ -44,6 +44,7 @@ class Setting extends Page implements HasForms
     {
         return $form->schema([
             Forms\Components\TextInput::make('no_whatsapp_admin'),
+            Forms\Components\Toggle::make('nginx_cache')->label('Enable Nginx Cache for video streaming'),
             Forms\Components\TextInput::make('site_url')->prefix('https://')->required(),
             Forms\Components\TextInput::make('site_name')->required(),
             Forms\Components\TextInput::make('site_description')->required(),
