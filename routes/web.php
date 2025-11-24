@@ -34,7 +34,7 @@ Route::get('/stop',[JustOrangeController::class,'stopPage'])->name('stop');
 Route::get('/referral',[JustOrangeController::class,'referralPage'])->name('referral');
 Route::get('/v', function(Request $request) {
     $hash = $request->get('src');
-    $url = base64_decode($hash);
+    $url = base64_decode(urldecode($hash));
     $stream = fopen($url, 'r');
     return response()->stream(function() use ($stream) {
         fpassthru($stream);

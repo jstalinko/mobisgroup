@@ -124,7 +124,8 @@ export const generateUUID = () => {
 export const nginxCacheVideo = (url) => {
     const setting = siteSetting();
     if(setting.nginx_cache){
-    return 'https://'+setting.site_url+'/v?src='+btoa(url);
+        const encodeUri = btoa(encodeURIComponent(url));
+    return 'https://'+setting.site_url+'/v?src='+encodeUri;
     }else{
         return url;
     }
