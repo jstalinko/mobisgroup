@@ -179,6 +179,9 @@
 
       <!-- Floating Buttons -->
       <div class="fixed right-4 bottom-32 flex flex-col gap-3 z-10">
+        <button @click="router.visit('/')" class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20">
+  <span class="mdi mdi-home text-white text-2xl"></span>
+</button>
         <!-- Episode List Button -->
         <button 
           @click="openEpisodeDrawer"
@@ -195,7 +198,7 @@
         <div class="drawer-side z-20">
           <label for="episode-drawer" class="drawer-overlay"></label>
 
-          <div class="w-full h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-t-3xl shadow-xl">
+          <div class="w-full h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-3xl shadow-xl">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b border-white/20">
               <label 
