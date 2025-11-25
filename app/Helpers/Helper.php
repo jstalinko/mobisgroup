@@ -488,4 +488,13 @@ class Helper
         // Close cURL session
         curl_close($ch);
     }
+    public static function cacheVideosCount()
+    {
+        $path = storage_path('app/videos');
+
+        // Cari semua file .mp4 secara rekursif
+        $files = glob($path . '/**/*.mp4');
+
+        return count($files);
+    }
 }

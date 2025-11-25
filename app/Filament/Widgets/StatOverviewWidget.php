@@ -13,10 +13,10 @@ class StatOverviewWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        $cached = Helper::cache_count();
+        $cached = Helper::cacheVideos();
         return [
             Stat::make('Total Pengguna' , User::count()),
-            Stat::make('Cached DB' , $cached),
+            Stat::make('Cached Videos' , $cached),
             Stat::make('Total Devices',UserDevice::count()),
             Stat::make('Total Active Devices',UserDevice::where('revoked',false)->count()),
             Stat::make('Total Subscriptions',User::whereHas('activeSubscription')->count()),
