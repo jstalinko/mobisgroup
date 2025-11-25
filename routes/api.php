@@ -37,3 +37,7 @@ Route::group(['prefix' => '/v1/{service}'] , function(){
 Route::post('/check-license' , [AuthController::class,'checkLicense'])->middleware('api.session');
 Route::post('/checkout' , [AuthController::class,'checkout']);
 Route::post('/request-withdrawal',[JustOrangeController::class,'requestWithdrawal']);
+Route::any('/payment-callback',function()
+{
+    response()->json(['success' => true],200,[],JSON_PRETTY_PRINT);
+});
