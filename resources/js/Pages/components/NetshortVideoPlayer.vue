@@ -125,37 +125,37 @@
             <span class="loading loading-spinner loading-lg text-primary"></span>
           </div>
 
-        <!-- Only load video if it's in the loadable range -->
-<video
-  v-if="shouldLoadVideo(index)"
-  :ref="el => { if (el) videoRefs[index] = el }"
-  :src="nginxCacheVideo(episode.playUrl , dramaDetail?.id)"
-  :poster="episode.cover"
-  class="w-full h-full object-cover"
-  controls
-  playsinline
-  :preload="index === currentIndex ? 'auto' : 'metadata'"
-  @loadstart="handleVideoLoading(index)"
-  @loadeddata="handleVideoCanPlay(index)"
-  @canplay="handleVideoPlay(index)"
-   @ended="handleVideoEnded(index)"
-></video>
+          <!-- Only load video if it's in the loadable range -->
+          <video
+            v-if="shouldLoadVideo(index)"
+            :ref="el => { if (el) videoRefs[index] = el }"
+            :src="nginxCacheVideo(episode.playUrl , dramaDetail?.id)"
+            :poster="episode.cover"
+            class="w-full h-full object-cover"
+            controls
+            playsinline
+            :preload="index === currentIndex ? 'auto' : 'none'"
+            @loadstart="handleVideoLoading(index)"
+            @loadeddata="handleVideoCanPlay(index)"
+            @canplay="handleVideoPlay(index)"
+            @ended="handleVideoEnded(index)"
+          ></video>
 
-<!-- Placeholder for videos that haven't loaded yet -->
-<div 
-  v-else 
-  class="w-full h-full flex items-center justify-center bg-gray-900"
-  :style="{ backgroundImage: episode.cover ? `url(${episode.cover})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }"
->
-  <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
-    <div class="text-center text-white">
-      <span class="mdi mdi-play-circle-outline text-6xl mb-2"></span>
-      <p class="text-lg font-bold">Episode {{ episode.episode }} | {{ dramaDetail?.title }}</p>
-      <p v-if="episode.isVip" class="text-sm mt-1">👑 VIP</p>
-      <p v-if="episode.isLocked" class="text-sm mt-1">🔒 Locked</p>
-    </div>
-  </div>
-</div>
+          <!-- Placeholder for videos that haven't loaded yet -->
+          <div 
+            v-else 
+            class="w-full h-full flex items-center justify-center bg-gray-900"
+            :style="{ backgroundImage: episode.cover ? `url(${episode.cover})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center' }"
+          >
+            <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <div class="text-center text-white">
+                <span class="mdi mdi-play-circle-outline text-6xl mb-2"></span>
+                <p class="text-lg font-bold">Episode {{ episode.episode }} | {{ dramaDetail?.title }}</p>
+                <p v-if="episode.isVip" class="text-sm mt-1">👑 VIP</p>
+                <p v-if="episode.isLocked" class="text-sm mt-1">🔒 Locked</p>
+              </div>
+            </div>
+          </div>
 
           <!-- Episode Info Overlay -->
           <div class="absolute bottom-20 left-4 right-4 text-white">
@@ -255,10 +255,10 @@ const isEpisodeDrawerOpen = ref(false);
 const scrollTimeout = ref(null);
 const isLoading = ref(true);
 const loadingIndex = ref(new Set());
-const loadRange = ref(2)
+const loadRange = ref(2);
+const isMobile = ref(false); // ✅ TAMBAHAN BARU
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value]);
-
 
 const updateURL = (episodeNum) => {
   const pathParts = window.location.pathname.split('/');
@@ -269,6 +269,7 @@ const updateURL = (episodeNum) => {
     window.history.pushState({}, '', newPath);
   }
 };
+
 // Fungsi untuk pause semua video kecuali yang aktif
 const pauseAllVideosExcept = (activeIndex) => {
   videoRefs.value.forEach((video, index) => {
@@ -285,13 +286,14 @@ const selectEpisode = (index) => {
   }
   updateURL(episodes.value[index].episode); 
 };
+
 const selectEpisodeMobile = (index) => {
   pauseAllVideosExcept(-1);
   
   currentIndex.value = index;
   isEpisodeDrawerOpen.value = false;
   
-  updateURL(episodes.value[index].episode); // ⬅️ TAMBAHKAN BARIS INI
+  updateURL(episodes.value[index].episode);
   
   const container = mobileContainer.value;
   if (container) {
@@ -310,9 +312,13 @@ const selectEpisodeMobile = (index) => {
   }, 600);
 };
 
+// ✅ OPTIMASI: Desktop load 1 video, Mobile load current + adjacent
 const shouldLoadVideo = (index) => {
+  if (!isMobile.value) {
+    return index === currentIndex.value; // Desktop: hanya current
+  }
   const distance = Math.abs(index - currentIndex.value);
-  return distance <= loadRange.value;
+  return distance <= loadRange.value; // Mobile: current + adjacent
 };
 
 const nextEpisode = () => {
@@ -338,12 +344,10 @@ const handleMobileScroll = (e) => {
     const newIndex = Math.round(scrollTop / window.innerHeight);
     
     if (newIndex !== currentIndex.value && newIndex >= 0 && newIndex < episodes.value.length) {
-      // Pause semua video
       pauseAllVideosExcept(-1);
       
       currentIndex.value = newIndex;
       
-      // Auto play video saat ini
       setTimeout(() => {
         const currentVideo = videoRefs.value[newIndex];
         if (currentVideo) {
@@ -360,16 +364,13 @@ const handleVideoLoading = (index) => {
 
 const handleVideoCanPlay = (index) => {
   loadingIndex.value.delete(index);
-  if (index === 0) {
+  if (index === 0 && isMobile.value) { // ✅ TAMBAH CHECK MOBILE
     isLoading.value = false;
   }
 };
+
 const handleVideoEnded = (index) => {
-  // Cek apakah sedang di mobile view
-  const isMobile = window.innerWidth < 1024;
-  
-  if (isMobile && index < episodes.value.length - 1) {
-    // Auto scroll ke episode berikutnya
+  if (isMobile.value && index < episodes.value.length - 1) { // ✅ GUNAKAN isMobile.value
     setTimeout(() => {
       const container = mobileContainer.value;
       if (container) {
@@ -381,8 +382,8 @@ const handleVideoEnded = (index) => {
     }, 500);
   }
 };
+
 const handleVideoPlay = (index) => {
-  // Ketika video mulai diputar, pause semua video lainnya
   pauseAllVideosExcept(index);
 };
 
@@ -413,32 +414,25 @@ const copyLink = () => {
   });
 };
 
-// Watch currentIndex untuk memastikan hanya satu video yang diputar
 watch(currentIndex, (newIndex) => {
   pauseAllVideosExcept(newIndex);
 });
 
-// DARI INI:
 onMounted(async () => {
-  try {
-    const response = await getChapterDetail(props.bookId);
-    episodes.value = response?.data?.episodes || [];
-    const detailResponse = await getTheaterDetail(props.bookId);
-    dramaDetail.value = detailResponse?.data || null;
-  } catch (error) {
-    console.error('Error loading episodes:', error);
-  }
-});
-
-// JADI INI ⬇️:
-onMounted(async () => {
+  // ✅ DETEKSI DEVICE TYPE
+  isMobile.value = window.innerWidth < 1024;
+  
+  const handleResize = () => {
+    isMobile.value = window.innerWidth < 1024;
+  };
+  window.addEventListener('resize', handleResize);
+  
   try {
     const response = await getChapterDetail(props.bookId);
     episodes.value = response?.data?.episodes || [];
     const detailResponse = await getTheaterDetail(props.bookId);
     dramaDetail.value = detailResponse?.data || null;
     
-    // ⬇️ TAMBAHAN BARU
     if (episodes.value.length > 0) {
       const episodeNum = parseInt(props.episode) || 1;
       const episodeIndex = episodes.value.findIndex(ep => ep.episode === episodeNum);
@@ -449,7 +443,7 @@ onMounted(async () => {
         currentIndex.value = 0;
       }
       
-      if (mobileContainer.value) {
+      if (isMobile.value && mobileContainer.value) {
         setTimeout(() => {
           mobileContainer.value.scrollTo({
             top: currentIndex.value * window.innerHeight,
@@ -461,7 +455,13 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error loading episodes:', error);
   }
+  
+  // ✅ CLEANUP
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize);
+  });
 });
+
 watch(() => props.episode, (newEpisode) => {
   if (newEpisode && episodes.value.length > 0) {
     const episodeNum = parseInt(newEpisode);
@@ -488,7 +488,6 @@ onUnmounted(() => {
   if (scrollTimeout.value) {
     clearTimeout(scrollTimeout.value);
   }
-  // Pause semua video saat component di-unmount
   pauseAllVideosExcept(-1);
 });
 </script>

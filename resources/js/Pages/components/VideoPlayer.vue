@@ -131,7 +131,7 @@
   class="w-full h-full object-cover"
   controls
   playsinline
-  :preload="index === currentIndex ? 'auto' : 'metadata'" 
+  :preload="index === currentIndex ? 'auto' : 'none'"
   @loadstart="handleVideoLoading(index)"
   @canplay="handleVideoCanPlay(index)"
   @ended="handleVideoEnded(index)" 
@@ -293,8 +293,9 @@ const isEpisodeDrawerOpen = ref(false);
 const isQualityDrawerOpen = ref(false);
 const scrollTimeout = ref(null);
 const isLoading = ref(true);
-const loadingIndex = ref(new Set());
-const loadRange = ref(2); 
+const loadingIndex = ref(new Set()); 
+const loadRange = ref(2);
+const isMobile = ref(false); // ← TAMBAHAN BARU
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value] );
 
@@ -319,8 +320,11 @@ const selectEpisode = (index) => {
   updateURL(index + 1); // ← TAMBAHKAN BARIS INI
 };
 const shouldLoadVideo = (index) => {
+  if (!isMobile.value) {
+    return index === currentIndex.value; // Desktop: 1 video saja
+  }
   const distance = Math.abs(index - currentIndex.value);
-  return distance <= loadRange.value;
+  return distance <= loadRange.value; // Mobile: current + adjacent
 };
 
 const selectEpisodeMobile = (index) => {
@@ -430,8 +434,7 @@ const handleVideoLoading = (index) => {
 
 // FUNCTION BARU 2
 const handleVideoCanPlay = (index) => {
-  const isMobile = window.innerWidth < 1024;
-if(isMobile){
+  
   loadingIndex.value.delete(index);
   if (index === 0) {
     isLoading.value = false;
@@ -444,13 +447,11 @@ if(isMobile){
       video.play().catch(err => console.log('Play error:', err));
     }
   }
-}
+
 };
 const handleVideoEnded = (index) => {
-  // Check if we're on mobile view (window width < 1024px for lg breakpoint)
-  const isMobile = window.innerWidth < 1024;
   
-  if (isMobile && index < episodes.value.length - 1) {
+  if (episodes.value.length - 1) {
     // Auto scroll to next episode
     setTimeout(() => {
       const container = mobileContainer.value;
@@ -496,6 +497,13 @@ const copyLink = () => {
 };
 
 onMounted(async () => {
+  isMobile.value = window.innerWidth < 1024;
+
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 1024;
+};
+window.addEventListener('resize', handleResize);
+
   let r = await getPlayerVideo(props.bookId,props.episode);
   let x = await getTheaterDetail(props.bookId);
   episodes.value = r?.data;
