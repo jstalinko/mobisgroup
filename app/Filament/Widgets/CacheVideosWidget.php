@@ -3,84 +3,102 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\Widget;
-use Livewire\WithPagination;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class CacheVideosWidget extends Widget
 {
-    use WithPagination;
-
     protected static string $view = 'filament.widgets.cache-videos-widget';
-    protected ?string $heading = 'Cache Videos';
-    protected int|string|array $columnSpan = 'full';
-    public array $allFiles = [];
-    public int $perPage = 10;
 
-    public function mount()
+    // judul widget (opsional)
+    protected ?string $heading = 'Cache Videos';
+
+    protected static int|null $sort = 2;
+    protected int|string|array $columnSpan = 'full';
+
+    public function mount(): void
     {
-        $this->scanFiles();
+        // nothing for now
     }
 
-    public function scanFiles()
+    public function getData(): array
     {
         $path = storage_path('app/videos');
 
+        // Pastikan folder ada
         if (!is_dir($path)) {
-            $this->allFiles = [];
-            return;
+            return [
+                'count' => 0,
+                'totalSize' => 0,
+                'totalSizeHuman' => '0 B',
+                'latestFiles' => [],
+                'error' => null,
+            ];
         }
 
+        $count = 0;
+        $totalBytes = 0;
         $files = [];
 
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS)
-        );
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS)
+            );
 
-        foreach ($iterator as $file) {
-            if ($file->isFile() && strtolower($file->getExtension()) === 'mp4') {
-                $files[] = [
-                    'path' => Str::after($file->getPathname(), $path . DIRECTORY_SEPARATOR),
-                    'size' => $file->getSize(),
-                    'size_human' => $this->humanFilesize($file->getSize()),
-                    'modified' => Carbon::createFromTimestamp($file->getMTime()),
-                ];
+            foreach ($iterator as $file) {
+                if ($file->isFile() && strtolower($file->getExtension()) === 'mp4') {
+                    $count++;
+                    $size = $file->getSize();
+                    $totalBytes += $size;
+
+                    $files[] = [
+                        'path' => Str::after($file->getPathname(), $path . DIRECTORY_SEPARATOR),
+                        'full_path' => $file->getPathname(),
+                        'size' => $size,
+                        'size_human' => $this->humanFilesize($size),
+                        'modified' => Carbon::createFromTimestamp($file->getMTime()),
+                    ];
+                }
             }
+
+            // urutkan terbaru dulu
+            usort($files, function ($a, $b) {
+                return $b['modified']->timestamp <=> $a['modified']->timestamp;
+            });
+
+            $latestFiles = array_slice($files, 0, 10);
+
+            return [
+                'count' => $count,
+                'totalSize' => $totalBytes,
+                'totalSizeHuman' => $this->humanFilesize($totalBytes),
+                'latestFiles' => $latestFiles,
+                'error' => null,
+            ];
+        } catch (\Throwable $e) {
+            // kalau ada error permission / lain2
+            return [
+                'count' => 0,
+                'totalSize' => 0,
+                'totalSizeHuman' => '0 B',
+                'latestFiles' => [],
+                'error' => $e->getMessage(),
+            ];
         }
-
-        // sort by modified desc
-        usort($files, fn ($a, $b) => $b['modified']->timestamp <=> $a['modified']->timestamp);
-
-        $this->allFiles = $files;
     }
 
-    public function getFilesProperty()
+    protected function humanFilesize($bytes, $decimals = 2): string
     {
-        $page = $this->page;
-        $perPage = $this->perPage;
-        $items = $this->allFiles;
-
-        $offset = ($page - 1) * $perPage;
-
-        return new LengthAwarePaginator(
-            array_slice($items, $offset, $perPage),
-            count($items),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-    }
-
-    protected function humanFilesize($bytes)
-    {
-        if ($bytes <= 0) return '0 B';
+        if ($bytes === 0) {
+            return '0 B';
+        }
 
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $i = floor(log($bytes, 1024));
+        $human = $bytes / pow(1024, $i);
 
-        return round($bytes / (1024 ** $i), 2) . ' ' . $units[$i];
+        return round($human, $decimals) . ' ' . $units[$i];
     }
 }
