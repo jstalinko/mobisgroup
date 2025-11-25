@@ -18,7 +18,7 @@ class CacheVideosWidget extends Widget
     protected ?string $heading = 'Cache Videos';
 
     protected array|int|string $columnSpan = 'full';
-    protected int|null $sort=2;
+    protected static int|null $sort=2;
 
     public array $allFiles = [];
     public int $perPage = 10;
