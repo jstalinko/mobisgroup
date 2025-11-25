@@ -10,7 +10,7 @@
           <div class="relative aspect-video">
             <video
               ref="videoPlayer"
-              :src="nginxCacheVideo(currentVideoUrl,dramaDetail?.id)"
+              :src="nginxCacheVideo(currentVideoUrl,dramaDetail?.id , currentIndex+1 ,slugify(dramaDetail?.title))"
               class="w-full h-full object-contain"
               controls
               @ended="nextEpisode"
@@ -128,7 +128,7 @@
 <video
   v-if="shouldLoadVideo(index)" 
   :ref="el => { if (el) videoRefs[index] = el }"
-  :src="nginxCacheVideo(getDefaultVideoUrl(episode) , dramaDetail?.id)"
+  :src="nginxCacheVideo(getDefaultVideoUrl(episode) , dramaDetail?.id , currentIndex+1 ,slugify(dramaDetail?.title))"
   class="w-full h-full object-cover"
   controls
   playsinline
@@ -280,7 +280,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/api';
-import { nginxCacheVideo } from '../../utils/helpers';
+import { nginxCacheVideo, slugify } from '../../utils/helpers';
 import Loading from './Loading.vue';
 
 const props = defineProps({bookId:String,episode:String});

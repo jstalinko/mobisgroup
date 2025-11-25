@@ -123,18 +123,27 @@ export const generateUUID = () => {
         return (c==='x' ? r : (r&0x3|0x8)).toString(16);
     });
 }
-export const nginxCacheVideo = (url, bookId) => {
-    
+export const nginxCacheVideo = (url, bookId, ep, slug) => {
+
     if (!url) {
         return ''; 
     }
-    
+
     const setting = siteSetting();
     const service = getService();
-    
+
     if (setting.nginx_cache) {
         const encodeUri = encodeURIComponent(url);
-        return 'https://' + setting.site_url + '/v?src=' + encodeUri + '&s=' + service + (bookId ? '&b=' + bookId : '');
+
+        let finalUrl = 'https://' + setting.site_url + '/v?src=' + encodeUri 
+            + '&s=' + service;
+
+        if (bookId) finalUrl += '&b=' + bookId;
+        if (ep) finalUrl += '&ep=' + ep;
+        if (slug) finalUrl += '&slug=' + encodeURIComponent(slug);
+
+        return finalUrl;
+
     } else {
         return url;
     }

@@ -44,10 +44,11 @@ Route::get('/v', function(Request $request) {
     $full_url = urldecode($request->get('src'));
     $serviceName = $request->get('s') ?? 'default';
     $bookId = $request->get('b') ?? null;
+    $ep = $request->get('ep') ?? '0';
+    $slug = $request->get('slug') ?? md5($full_url);
 
-    // 2. Tentukan Path Cache
-    $cache_key_url = Str::before($full_url, '?');
-    $file_name = 'videos/'.$serviceName.'/'. md5($cache_key_url) . '_' . $bookId . '.mp4';
+    $cache_key_url = $serviceName.'_'.$bookId.'-'.$slug.'-episode-'.$ep;
+    $file_name = 'videos/'.$serviceName.'/'. $cache_key_url. '.mp4';
     $disk = Storage::disk('local');
 
     // 3. Logic Cache dan Download
@@ -92,7 +93,7 @@ Route::get('/v', function(Request $request) {
     if (!($disk->exists($file_name) && $disk->size($file_name) > 0)) {
          abort(500, 'Video file could not be downloaded or resulted in zero size after multiple attempts.');
     }
-    $internal_path = "/protected/videos/" . $serviceName . "/" . md5($cache_key_url) . "_" . $bookId . ".mp4";
+    $internal_path = "/protected/videos/" . $serviceName . "/" . $cache_key_url . ".mp4";
 
     return response("", 200, [
         "Content-Type" => "video/mp4",
