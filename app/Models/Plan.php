@@ -19,6 +19,7 @@ class Plan extends Model
         'duration',
         'max_devices',
         'active',
+        'referral_commission'
     ];
 
     public function subscriptions()

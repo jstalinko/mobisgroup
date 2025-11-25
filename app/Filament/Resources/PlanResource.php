@@ -44,6 +44,8 @@ class PlanResource extends Resource
                     ->required()
                     ->numeric()
                     ->default(2),
+                Forms\Components\TextInput::make('referral_commission')
+                ->required()->prefix('Rp')->numeric()->default(0),
                 Forms\Components\Toggle::make('active')
                     ->required(),
             ]);
