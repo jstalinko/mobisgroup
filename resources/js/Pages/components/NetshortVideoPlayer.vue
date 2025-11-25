@@ -133,12 +133,12 @@
   :poster="episode.cover"
   class="w-full h-full object-cover"
   controls
-  loop
   playsinline
   :preload="index === currentIndex ? 'auto' : 'metadata'"
   @loadstart="handleVideoLoading(index)"
   @loadeddata="handleVideoCanPlay(index)"
-  @play="handleVideoPlay(index)"
+  @canplay="handleVideoPlay(index)"
+   @ended="handleVideoEnded(index)"
 ></video>
 
 <!-- Placeholder for videos that haven't loaded yet -->
@@ -364,7 +364,23 @@ const handleVideoCanPlay = (index) => {
     isLoading.value = false;
   }
 };
-
+const handleVideoEnded = (index) => {
+  // Cek apakah sedang di mobile view
+  const isMobile = window.innerWidth < 1024;
+  
+  if (isMobile && index < episodes.value.length - 1) {
+    // Auto scroll ke episode berikutnya
+    setTimeout(() => {
+      const container = mobileContainer.value;
+      if (container) {
+        container.scrollTo({
+          top: (index + 1) * window.innerHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 500);
+  }
+};
 const handleVideoPlay = (index) => {
   // Ketika video mulai diputar, pause semua video lainnya
   pauseAllVideosExcept(index);

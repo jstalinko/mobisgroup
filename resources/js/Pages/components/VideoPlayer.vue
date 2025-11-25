@@ -130,11 +130,11 @@
   :src="nginxCacheVideo(getDefaultVideoUrl(episode) , dramaDetail?.id)"
   class="w-full h-full object-cover"
   controls
-  loop
   playsinline
   :preload="index === currentIndex ? 'auto' : 'metadata'" 
   @loadstart="handleVideoLoading(index)"
   @canplay="handleVideoCanPlay(index)"
+  @ended="handleVideoEnded(index)" 
 ></video>
 
 <!-- ✅ TAMBAHAN: Placeholder untuk video yang belum load -->
@@ -430,6 +430,8 @@ const handleVideoLoading = (index) => {
 
 // FUNCTION BARU 2
 const handleVideoCanPlay = (index) => {
+  const isMobile = window.innerWidth < 1024;
+if(isMobile){
   loadingIndex.value.delete(index);
   if (index === 0) {
     isLoading.value = false;
@@ -441,6 +443,24 @@ const handleVideoCanPlay = (index) => {
     if (video) {
       video.play().catch(err => console.log('Play error:', err));
     }
+  }
+}
+};
+const handleVideoEnded = (index) => {
+  // Check if we're on mobile view (window width < 1024px for lg breakpoint)
+  const isMobile = window.innerWidth < 1024;
+  
+  if (isMobile && index < episodes.value.length - 1) {
+    // Auto scroll to next episode
+    setTimeout(() => {
+      const container = mobileContainer.value;
+      if (container) {
+        container.scrollTo({
+          top: (index + 1) * window.innerHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 500); // Small delay for better UX
   }
 };
 
