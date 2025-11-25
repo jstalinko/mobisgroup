@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PlanResource\Pages;
 use App\Filament\Resources\PlanResource\RelationManagers;
 use App\Models\Plan;
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PlanResource extends Resource
 {
+        use HasPanelShield;
     protected static ?string $model = Plan::class;
 
     protected static ?string $navigationIcon = 'heroicon-c-queue-list';

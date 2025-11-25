@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Forms;
 use App\Models\User;
 use Filament\Tables;
@@ -19,6 +20,7 @@ use App\Filament\Resources\OrderResource\RelationManagers;
 
 class OrderResource extends Resource
 {
+    use HasPanelShield;
     protected static ?string $model = Order::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';

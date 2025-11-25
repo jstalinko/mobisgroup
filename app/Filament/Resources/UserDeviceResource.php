@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserDeviceResource\Pages;
 use App\Filament\Resources\UserDeviceResource\RelationManagers;
 use App\Models\UserDevice;
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserDeviceResource extends Resource
 {
+    use HasPanelShield;
     protected static ?string $model = UserDevice::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-device-phone-mobile';

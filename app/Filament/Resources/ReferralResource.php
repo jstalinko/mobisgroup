@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ReferralResource\Pages;
 use App\Filament\Resources\ReferralResource\RelationManagers;
 use App\Models\Referral;
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ReferralResource extends Resource
 {
+    use HasPanelShield;
     protected static ?string $model = Referral::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-share';

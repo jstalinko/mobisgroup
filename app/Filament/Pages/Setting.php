@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
@@ -12,6 +13,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 
 class Setting extends Page implements HasForms
 {
+    use HasPageShield;
     use InteractsWithForms;
     protected static ?string $navigationIcon = 'heroicon-o-cog';
 
