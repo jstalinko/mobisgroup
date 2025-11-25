@@ -296,6 +296,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/api';
 import { nginxCacheVideo, siteSetting, slugify } from '../../utils/helpers';
+import { router } from '@inertiajs/vue3';
 import Loading from './Loading.vue';
 const setting = siteSetting();
 const props = defineProps({bookId:String,episode:String});

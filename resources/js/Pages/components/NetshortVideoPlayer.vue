@@ -251,7 +251,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail, getTheaterDetail } from '../../utils/api';
 import { nginxCacheVideo, siteSetting } from '../../utils/helpers';
 import Loading from './Loading.vue';
-
+import { router } from '@inertiajs/vue3';
 const props = defineProps({
   bookId: String,
   episode: String
