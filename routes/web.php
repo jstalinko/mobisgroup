@@ -1,13 +1,15 @@
 <?php
 
+
 use Inertia\Inertia;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CloakingController;
-use App\Http\Controllers\JustOrangeController;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\JustOrangeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,31 +37,66 @@ Route::get('/coming-soon/{service}',[JustOrangeController::class,'ComingSoonServ
 Route::get('/stop',[JustOrangeController::class,'stopPage'])->name('stop');
 Route::get('/referral',[JustOrangeController::class,'referralPage'])->name('referral');
 
+
 Route::get('/v', function(Request $request) {
 
+    // 1. Ambil dan Dekode Parameter
     $full_url = urldecode($request->get('src'));
     $serviceName = $request->get('s') ?? 'default';
     $bookId = $request->get('b') ?? null;
 
+    // 2. Tentukan Path Cache
     $cache_key_url = Str::before($full_url, '?');
-    $file_name = 'videos/'.$serviceName.'/'. md5($cache_key_url) . '_' . $bookId . '.mp4'; 
+    $file_name = 'videos/'.$serviceName.'/'. md5($cache_key_url) . '_' . $bookId . '.mp4';
+    $disk = Storage::disk('local');
 
-    if (!Storage::disk('local')->exists($file_name)) {
+    // 3. Logic Cache dan Download
+    $max_retries = 3; // Batasi jumlah percobaan ulang
+    $attempts = 0;
 
-        $contents = file_get_contents($full_url);
+    // Lakukan loop selama file belum ada, atau ukurannya 0, dan percobaan belum mencapai batas
+    while (!($disk->exists($file_name) && $disk->size($file_name) > 0) && $attempts < $max_retries) {
+        $attempts++;
+        Log::info("Fetching video: " . $full_url . " (Attempt: " . $attempts . ")");
 
-        if ($contents === false) {
-            abort(500, 'Failed to fetch video source.');
+        try {
+            // Gunakan Http::get() untuk mengambil konten
+            $response = Http::timeout(60)->get($full_url); // Set timeout, misal 60 detik
+
+            if ($response->successful()) {
+                $contents = $response->body();
+                $disk->put($file_name, $contents);
+                if ($disk->size($file_name) > 0) {
+                    Log::info("Video saved successfully and is not zero size: " . $file_name);
+                    break; // Keluar dari loop jika berhasil
+                } else {
+                    Log::warning("Downloaded file is zero size. Retrying...");
+                    // Hapus file 0-byte jika ada, agar loop dapat mencoba lagi
+                    $disk->delete($file_name);
+                }
+            } else {
+                Log::error("Failed to fetch video source. HTTP Status: " . $response->status() . " URL: " . $full_url);
+                if ($attempts >= $max_retries) {
+                    abort(500, 'Failed to fetch video source after ' . $max_retries . ' attempts. HTTP Status: ' . $response->status());
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Exception during video fetch: " . $e->getMessage() . " URL: " . $full_url);
+            if ($attempts >= $max_retries) {
+                abort(500, 'Failed to fetch video source after ' . $max_retries . ' attempts. Exception: ' . $e->getMessage());
+            }
         }
-
-        Storage::disk('local')->put($file_name, $contents);
     }
 
+    if (!($disk->exists($file_name) && $disk->size($file_name) > 0)) {
+         abort(500, 'Video file could not be downloaded or resulted in zero size after multiple attempts.');
+    }
     $internal_path = "/protected/videos/" . $serviceName . "/" . md5($cache_key_url) . "_" . $bookId . ".mp4";
 
     return response("", 200, [
         "Content-Type" => "video/mp4",
-        "X-Accel-Redirect" => $internal_path,
+        "X-Accel-Redirect" => $internal_path, 
         "Accept-Ranges" => "bytes",
     ]);
 });
