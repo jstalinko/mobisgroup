@@ -3,7 +3,7 @@
    
     
     <!-- Desktop View -->
-    <div class="hidden lg:block min-h-screen bg-base-200">
+    <div class="hidden lg:block min-h-screen bg-base-200" v-if="!isMobile">
       <div class="container mx-auto p-4">
         <!-- Video Area -->
         <div class="bg-black rounded-lg overflow-hidden mb-4">
@@ -99,7 +99,7 @@
     </div>
 
     <!-- Mobile View -->
-    <div class="lg:hidden relative h-screen overflow-hidden bg-black">
+    <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
       <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-black z-30">
     <div class="text-center">
       <span class="loading loading-spinner loading-lg text-primary"></span>
