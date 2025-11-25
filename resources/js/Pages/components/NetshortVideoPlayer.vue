@@ -352,9 +352,11 @@ const handleMobileScroll = (e) => {
       
       setTimeout(() => {
         const currentVideo = videoRefs.value[newIndex];
+        
         if (currentVideo) {
           currentVideo.play().catch(err => console.log('Play error:', err));
         }
+        
       }, 200);
     }
   }, 150);
@@ -381,6 +383,7 @@ const handleVideoEnded = (index) => {
           behavior: 'smooth'
         });
       }
+      updateURL(episodes.value[index].episode);
     }, 500);
   }
 };

@@ -463,6 +463,7 @@ const handleVideoEnded = (index) => {
           behavior: 'smooth'
         });
       }
+      updateURL(index+1);
     }, 500); // Small delay for better UX
   }
 };
