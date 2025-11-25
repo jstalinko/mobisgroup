@@ -97,7 +97,7 @@
         </div>
       </div>
     </div>
-    <Loading v-if="isLoading && !isMobile"/>
+    <Loading :show="isLoading && !isMobile"/>
 
     <!-- Mobile View -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
