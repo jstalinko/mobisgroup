@@ -124,9 +124,9 @@ export const generateUUID = () => {
     });
 }
 export const nginxCacheVideo = (url, bookId) => {
-    // ✅ Early return jika url null/undefined/empty
+    
     if (!url) {
-        return ''; // atau return null, sesuai kebutuhan
+        return ''; 
     }
     
     const setting = siteSetting();
