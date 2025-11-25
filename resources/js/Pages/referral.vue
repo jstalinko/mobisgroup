@@ -255,7 +255,7 @@
       <!-- Alert jika saldo kurang -->
       <div v-if="referral.availableCommission < minimalWithdrawal" class="alert alert-warning">
         <span class="mdi mdi-alert"></span>
-        <span class="text-xs md:text-sm">Saldo komisi minimal Rp 50.000 untuk melakukan penarikan</span>
+        <span class="text-xs md:text-sm">Saldo komisi minimal  {{ formatCurrency(minimalWithdrawal) }} untuk melakukan penarikan</span>
       </div>
 
       <!-- Submit Button -->
@@ -325,6 +325,7 @@
 
   <Footer />
   <MobileNav />
+  <Loading :show="isLoading"/>
 </template>
 
 <script setup>
@@ -333,9 +334,11 @@ import MobileNav from './components/MobileNav.vue';
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
 import { http } from '../utils/api';
+import Loading from './components/Loading.vue';
+import { formatCurrency } from '../utils/helpers';
 
 const props = defineProps({ prop: Object });
-
+const isLoading = ref(false);
 const linkCopied = ref(false);
 const codeCopied = ref(false);
 const referral = ref(props.prop || {});
@@ -358,12 +361,12 @@ const withdrawalForm = ref({
 });
 const submitWithdrawal =async () => {
   if (referral.availableCommission < minimalWithdrawal) return
-  
+  isLoading.value = true;
   // Handle withdrawal submission
   const response = await http('/api/request-withdrawal' , {
     method:'POST',
     body:{
-      phone: withdrawalForm.value.phone,
+      phone: withdrawalForm.value.whatsapp,
       bank_name: withdrawalForm.value.bankName,
       account_number: withdrawalForm.value.accountNumber,
       holder_name: withdrawalForm.value.accountName,
@@ -387,6 +390,7 @@ if(response.success){
   alert('Pengajuan tidak dapat di proses,silakan ulangi lagi');
   window.location.reload;
 }
+  isLoading.value = false;
 }
 const copyCode = () => {
   const code = props.prop?.referralCode || 'YOUR_CODE';

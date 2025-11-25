@@ -69,12 +69,12 @@ class Referral extends Model
     public function markAsPending()
     {
         $this->status = 'pending';
-        $this->save();
+       return  $this->save();
     }
     public function markAsWithdrawn()
     {
         $this->status = 'withdrawn';
-        $this->save();
+        return $this->save();
     }
     
 }

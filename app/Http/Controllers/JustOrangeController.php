@@ -139,6 +139,8 @@ class JustOrangeController extends Controller
 - Tanggal : ".date('D,d-m-Y H:i')."\n
 ";
         $send = \App\Helpers\Helper::whatsappSend($message,$setting['no_whatsapp_admin']);
+         Referral::where('user_id', $user_id)->update(['status' => 'withdrawn']);
+
         return response()->json(['success' => true]);
     }
 }
