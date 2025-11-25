@@ -3,7 +3,7 @@
     <!-- Desktop View -->
     <div class="hidden lg:block min-h-screen bg-base-200" v-if="!isMobile">
       <div class="container mx-auto p-4">
-        <!-- Video Area -->
+     <!-- Video Area -->
         <div class="bg-black rounded-lg overflow-hidden mb-4">
           <div class="relative aspect-video">
             <video
@@ -14,6 +14,10 @@
               controls
               @ended="nextEpisode"
             ></video>
+            <!-- Floating Watermark Desktop -->
+            <div class="absolute top-4 right-4 text-white font-bold text-lg opacity-70 pointer-events-none z-10 bg-black/30 px-3 py-1 rounded-lg backdrop-blur-sm">
+              {{ setting.site_name }}
+            </div>
           </div>
         </div>
 
@@ -119,14 +123,17 @@
           :key="episode.id"
           class="snap-start h-screen flex items-center justify-center relative"
         >
-          <div 
+         <div 
             v-if="loadingIndex.has(index)" 
             class="absolute inset-0 flex items-center justify-center bg-black/80 z-10"
           >
             <span class="loading loading-spinner loading-lg text-primary"></span>
           </div>
 
-          <!-- Only load video if it's in the loadable range -->
+          
+          <div class="absolute top-4 right-4 text-white font-bold text-base opacity-70 pointer-events-none z-20 bg-black/30 px-3 py-1 rounded-lg backdrop-blur-sm">
+            {{setting.site_name}}
+          </div>
           <video
             v-if="shouldLoadVideo(index)"
             :ref="el => { if (el) videoRefs[index] = el }"
@@ -242,14 +249,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail, getTheaterDetail } from '../../utils/api';
-import { nginxCacheVideo } from '../../utils/helpers';
+import { nginxCacheVideo, siteSetting } from '../../utils/helpers';
 import Loading from './Loading.vue';
 
 const props = defineProps({
   bookId: String,
   episode: String
 });
-
+const setting = siteSetting();
 const dramaDetail = ref(null);
 const episodes = ref([]);
 const currentIndex = ref(0);

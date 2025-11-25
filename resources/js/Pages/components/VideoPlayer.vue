@@ -5,7 +5,7 @@
     <!-- Desktop View -->
     <div class="hidden lg:block min-h-screen bg-base-200" v-if="!isMobile">
       <div class="container mx-auto p-4">
-        <!-- Video Area -->
+         <!-- Video Area -->
         <div class="bg-black rounded-lg overflow-hidden mb-4">
           <div class="relative aspect-video">
             <video
@@ -15,6 +15,11 @@
               controls
               @ended="nextEpisode"
             ></video>
+            
+            <!-- Floating Watermark Desktop -->
+            <div class="absolute top-4 left-4 text-white font-bold text-lg opacity-70 pointer-events-none z-10 bg-black/30 px-3 py-1 rounded-lg backdrop-blur-sm">
+              {{ setting.site_name  }}
+            </div>
             
             <!-- Quality Selector -->
             <div class="absolute top-4 right-4">
@@ -117,12 +122,17 @@
           :key="episode.id"
           class="snap-start h-screen flex items-center justify-center relative"
         >
-           <div 
+            <div 
         v-if="loadingIndex.has(index)" 
         class="absolute inset-0 flex items-center justify-center bg-black/80 z-10"
       >
         <span class="loading loading-spinner loading-lg text-primary"></span>
       </div>
+
+          <!-- Floating Watermark Mobile -->
+          <div class="absolute top-4 right-4 text-white font-bold text-base opacity-70 pointer-events-none z-20 bg-black/30 px-3 py-1 rounded-lg backdrop-blur-sm">
+            {{ setting.site_name }}
+          </div>
 
     <!-- Only load video if it's in the loadable range -->
 <video
@@ -285,9 +295,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/api';
-import { nginxCacheVideo, slugify } from '../../utils/helpers';
+import { nginxCacheVideo, siteSetting, slugify } from '../../utils/helpers';
 import Loading from './Loading.vue';
-
+const setting = siteSetting();
 const props = defineProps({bookId:String,episode:String});
 const episodes = ref([]);
 const dramaDetail = ref([]);
