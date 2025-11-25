@@ -194,26 +194,7 @@
           <div>
          <div>
     <form @submit.prevent="submitWithdrawal" class="space-y-4">
-      <!-- Jumlah Penarikan -->
-      <div>
-        <label class="label">
-          <span class="label-text text-xs md:text-sm">Jumlah Penarikan (Rp)</span>
-        </label>
-        <input 
-          v-model="withdrawalForm.amount"
-          type="number" 
-          min="minimalWithdrawal"
-          :max="referral.availableCommission"
-          class="input input-bordered w-full input-sm md:input-md text-xs md:text-sm" 
-          placeholder="Masukkan jumlah penarikan minimal Rp 50.000"
-          :disabled="referral.availableCommission < minimalWithdrawal"
-        />
-        <label class="label">
-          <span class="label-text-alt text-xs md:text-sm">
-            Saldo Komisi Tersedia: Rp {{ formatNumber(referral.availableCommission) }}
-          </span>
-        </label>
-      </div>
+
 
       <!-- Nama Bank / E-Wallet -->
       <div>
@@ -376,7 +357,7 @@ const withdrawalForm = ref({
   whatsapp: ''
 });
 const submitWithdrawal =async () => {
-  if (props.referral.availableCommission < minimalWithdrawal) return
+  if (referral.availableCommission < minimalWithdrawal) return
   
   // Handle withdrawal submission
   const response = await http('/api/request-withdrawal' , {
@@ -389,8 +370,7 @@ const submitWithdrawal =async () => {
       user_id: props.prop.user_id
     }
   });
-  console.log(response);
-  
+if(response.success){  
   // Reset form after submission
   withdrawalForm.value = {
     amount: null,
@@ -403,6 +383,10 @@ const submitWithdrawal =async () => {
   // Show success message
   alert('Pengajuan penarikan berhasil diajukan!');
   window.location.reload();
+}else{
+  alert('Pengajuan tidak dapat di proses,silakan ulangi lagi');
+  window.location.reload;
+}
 }
 const copyCode = () => {
   const code = props.prop?.referralCode || 'YOUR_CODE';

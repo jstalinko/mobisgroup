@@ -134,7 +134,7 @@ class JustOrangeController extends Controller
 - Akun    : ".$user->name."\n
 - License : ".$user->license_key."\n
 - Phone   : ".$phone."\n
-- Jml. Penarikan : ".$user->availableCommission()."\n\n
+- Jml. Penarikan : Rp ".str_replace(',','.',number_format($user->availableCommission()))."\n\n
 - Pembayaran ke : ".$account_number. " ( ". $nama_bank. " ) A/n ".$holder_name."\n
 - Tanggal : ".date('D,d-m-Y H:i')."\n
 ";
