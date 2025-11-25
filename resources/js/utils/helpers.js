@@ -123,13 +123,19 @@ export const generateUUID = () => {
         return (c==='x' ? r : (r&0x3|0x8)).toString(16);
     });
 }
-export const nginxCacheVideo = (url , bookId) => {
+export const nginxCacheVideo = (url, bookId) => {
+    // ✅ Early return jika url null/undefined/empty
+    if (!url) {
+        return ''; // atau return null, sesuai kebutuhan
+    }
+    
     const setting = siteSetting();
     const service = getService();
-    if(setting.nginx_cache){
+    
+    if (setting.nginx_cache) {
         const encodeUri = encodeURIComponent(url);
-    return 'https://'+setting.site_url+'/v?src='+encodeUri+'&s='+service+(bookId ? '&b='+bookId : '');
-    }else{
+        return 'https://' + setting.site_url + '/v?src=' + encodeUri + '&s=' + service + (bookId ? '&b=' + bookId : '');
+    } else {
         return url;
     }
 };
