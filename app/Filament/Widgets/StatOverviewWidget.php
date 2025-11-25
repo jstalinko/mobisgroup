@@ -13,7 +13,7 @@ class StatOverviewWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        $cached = Helper::cacheVideos();
+        $cached = Helper::cacheVideosCount();
         return [
             Stat::make('Total Pengguna' , User::count()),
             Stat::make('Cached Videos' , $cached),
