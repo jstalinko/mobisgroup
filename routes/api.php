@@ -39,5 +39,5 @@ Route::post('/checkout' , [AuthController::class,'checkout']);
 Route::post('/request-withdrawal',[JustOrangeController::class,'requestWithdrawal']);
 Route::any('/payment-callback',function()
 {
-    response()->json(['success' => true],200,[],JSON_PRETTY_PRINT);
+    return response()->json(['success' => true],200,[],JSON_PRETTY_PRINT);
 });
