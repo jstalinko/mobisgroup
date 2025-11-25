@@ -383,7 +383,7 @@ const handleVideoEnded = (index) => {
           behavior: 'smooth'
         });
       }
-      updateURL(episodes.value[index].episode);
+      updateURL(currentIndex.value+1);
     }, 500);
   }
 };
