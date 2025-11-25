@@ -351,6 +351,7 @@ import { ref } from 'vue';
 import MobileNav from './components/MobileNav.vue';
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
+import { http } from '../utils/api';
 
 const props = defineProps({ prop: Object });
 
@@ -374,11 +375,21 @@ const withdrawalForm = ref({
   accountName: '',
   whatsapp: ''
 });
-const submitWithdrawal = () => {
+const submitWithdrawal =async () => {
   if (props.referral.availableCommission < minimalWithdrawal) return
   
   // Handle withdrawal submission
-  console.log('Withdrawal submitted:', withdrawalForm.value)
+  const response = await http('/api/request-withdrawal' , {
+    method:'POST',
+    body:{
+      phone: withdrawalForm.value.phone,
+      bank_name: withdrawalForm.value.bankName,
+      account_number: withdrawalForm.value.accountNumber,
+      holder_name: withdrawalForm.value.accountName,
+      user_id: props.prop.user_id
+    }
+  });
+  console.log(response);
   
   // Reset form after submission
   withdrawalForm.value = {
@@ -390,7 +401,8 @@ const submitWithdrawal = () => {
   }
   
   // Show success message
-  alert('Pengajuan penarikan berhasil diajukan!')
+  alert('Pengajuan penarikan berhasil diajukan!');
+  window.location.reload();
 }
 const copyCode = () => {
   const code = props.prop?.referralCode || 'YOUR_CODE';

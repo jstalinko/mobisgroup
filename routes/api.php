@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use GuzzleHttp\Exception\RequestException;
 use App\Http\Controllers\API\MovieServiceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\JustOrangeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,3 +36,4 @@ Route::group(['prefix' => '/v1/{service}'] , function(){
 
 Route::post('/check-license' , [AuthController::class,'checkLicense'])->middleware('api.session');
 Route::post('/checkout' , [AuthController::class,'checkout']);
+Route::post('/request-withdrawal',[JustOrangeController::class,'requestWithdrawal']);

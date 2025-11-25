@@ -410,21 +410,21 @@ class Helper
                 $path = storage_path('framework/cache/data');
                 return count(File::allFiles($path));
 
-            // ==============================
-            // DATABASE CACHE
-            // ==============================
+                // ==============================
+                // DATABASE CACHE
+                // ==============================
             case 'database':
                 return DB::table(config('cache.stores.database.table', 'cache'))->count();
 
-            // ==============================
-            // REDIS CACHE
-            // ==============================
+                // ==============================
+                // REDIS CACHE
+                // ==============================
             case 'redis':
                 $prefix = config('cache.prefix') . ':*';
 
                 $total = 0;
                 $cursor = 0;
-                
+
 
                 do {
                     [$cursor, $keys] = Redis::scan($cursor, [
@@ -433,14 +433,13 @@ class Helper
                     ]);
 
                     $total += $keys == null ? 0 : count($keys);
-
                 } while ($cursor != 0);
 
                 return $total;
 
-            // ==============================
-            // MEMCACHED
-            // ==============================
+                // ==============================
+                // MEMCACHED
+                // ==============================
             case 'memcached':
                 $memcached = Cache::getStore()->getMemcached();
                 $stats = $memcached->getStats();
@@ -452,17 +451,41 @@ class Helper
 
                 return $total;
 
-            // ==============================
-            // DEFAULT (fallback)
-            // ==============================
+                // ==============================
+                // DEFAULT (fallback)
+                // ==============================
             default:
                 return null;
         }
     }
 
-    public static function piwapiWhatsappSend($message,$to)
+    public static function whatsappSend($message, $to)
     {
-        
+        $formatPhone = preg_replace("/^08/", "628", $to);
+        $url = "https://piwapi.com/api/send/whatsapp";
+        $data = [
+            "secret" => "e981b0f06eb2d4934f17cf40a221191aab07076a",
+            "account" => "1747398028019d385eb67632a7e958e23f24bd07d768272d8c0b04e",
+            "recipient" => $formatPhone,
+            "type" => "text",
+            "message" => $message
+        ];
+
+        // Initialize cURL session
+        $ch = curl_init();
+
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        // Execute the request
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        return $response;
+        // Close cURL session
+        curl_close($ch);
     }
- 
 }

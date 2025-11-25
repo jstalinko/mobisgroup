@@ -114,7 +114,31 @@ class JustOrangeController extends Controller
         $prop['availableCommission'] = $user->availableCommission();
         $prop['withdrawnCommission'] = $user->withdrawnCommission();
         $prop['totalReferrals'] = $user->referrals()->count();
+        $prop['user_id'] = $user->id;
         $data['prop'] = $prop;
         return Inertia::render('referral', $data);
+    }
+
+    public function requestWithdrawal(Request $request)
+    {
+        $setting = json_decode(file_get_contents(storage_path('app/settings.json')) ,true);
+        $phone = $request->phone;
+        $user_id = $request->user_id;
+        $nama_bank = $request->bank_name;
+        $account_number = $request->account_number;
+        $holder_name = $request->holder_name;
+        $user = User::find($user_id);
+        $message = "
+-- ".$setting['site_name']." --\n
+*REQUEST WITHDRAWAL REFERRAL COMMISSION*\n\n
+- Akun    : ".$user->name."\n
+- License : ".$user->license_key."\n
+- Phone   : ".$phone."\n
+- Jml. Penarikan : ".$user->availableCommission()."\n\n
+- Pembayaran ke : ".$account_number. " ( ". $nama_bank. " ) A/n ".$holder_name."\n
+- Tanggal : ".date('D,d-m-Y H:i')."\n
+";
+        $send = \App\Helpers\Helper::whatsappSend($message,$setting['no_whatsapp_admin']);
+        return response()->json(['success' => true]);
     }
 }
