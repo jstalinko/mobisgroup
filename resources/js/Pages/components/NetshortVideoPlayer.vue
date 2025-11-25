@@ -98,6 +98,7 @@
         </div>
       </div>
     </div>
+    <Loading v-if="isLoading && !isMobile"/>
 
     <!-- Mobile View -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
@@ -239,6 +240,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail, getTheaterDetail } from '../../utils/api';
 import { nginxCacheVideo } from '../../utils/helpers';
+import Loading from './Loading.vue';
 
 const props = defineProps({
   bookId: String,
@@ -428,6 +430,7 @@ onMounted(async () => {
   window.addEventListener('resize', handleResize);
   
   try {
+    isLoading.value = true;
     const response = await getChapterDetail(props.bookId);
     episodes.value = response?.data?.episodes || [];
     const detailResponse = await getTheaterDetail(props.bookId);
@@ -455,13 +458,15 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error loading episodes:', error);
   }
+  isLoading.value=false;
   
-  // ✅ CLEANUP
+
+});
+ // ✅ CLEANUP
   onUnmounted(() => {
     window.removeEventListener('resize', handleResize);
   });
-});
-
+  
 watch(() => props.episode, (newEpisode) => {
   if (newEpisode && episodes.value.length > 0) {
     const episodeNum = parseInt(newEpisode);

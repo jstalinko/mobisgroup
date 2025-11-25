@@ -1,7 +1,7 @@
 {
     "no_whatsapp_admin": "087857580910",
     "site_url": "localhost:8000",
-    "nginx_cache": true,
+    "nginx_cache": false,
     "site_name": "MobisGroup.ID",
     "site_description": "Nonton drama cina di dramabox,netshort dan lainnya",
     "icon": null,

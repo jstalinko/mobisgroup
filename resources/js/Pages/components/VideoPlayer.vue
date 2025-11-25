@@ -97,6 +97,7 @@
         </div>
       </div>
     </div>
+    <Loading v-if="isLoading && !isMobile"/>
 
     <!-- Mobile View -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
@@ -280,6 +281,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/api';
 import { nginxCacheVideo } from '../../utils/helpers';
+import Loading from './Loading.vue';
 
 const props = defineProps({bookId:String,episode:String});
 const episodes = ref([]);
@@ -503,12 +505,12 @@ const handleResize = () => {
   isMobile.value = window.innerWidth < 1024;
 };
 window.addEventListener('resize', handleResize);
-
+isLoading.value=true;
   let r = await getPlayerVideo(props.bookId,props.episode);
   let x = await getTheaterDetail(props.bookId);
   episodes.value = r?.data;
   dramaDetail.value = x?.data;
-  
+isLoading.value=false;
   if (episodes.value.length > 0) {
     // Set current index based on props.episode from URL
     const episodeNum = parseInt(props.episode) || 1;
