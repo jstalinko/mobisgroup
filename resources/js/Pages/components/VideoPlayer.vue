@@ -561,8 +561,8 @@ const scheduleAdForVideo = (video, episodeIndex) => {
     clearTimeout(adTimeoutId.value);
   }
 
-  const minTime = 30;
-  const maxTime = 60;
+  const minTime = 1;
+  const maxTime = 30;
   const videoDuration = video.duration || 120;
   const randomTime = Math.min(
     Math.random() * (maxTime - minTime) + minTime,
