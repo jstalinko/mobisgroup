@@ -421,32 +421,11 @@ const handleVideoCanPlay = (index) => {
   if (isMobile.value && index === currentIndex.value) {
     const video = videoRefs.value[index];
     if (video) {
-      scheduleAdForVideo(video, index);
+      (video, index);
     }
   }
-};const scheduleAdForVideo = (video, episodeIndex) => {
-  if (!setting?.ads?.active || adShownForEpisode.value.has(episodeIndex)) {
-    return;
-  }
-
-  if (adTimeoutId.value) {
-    clearTimeout(adTimeoutId.value);
-  }
-
-  const minTime = 30;
-  const maxTime = 60;
-  const videoDuration = video.duration || 120;
-  const randomTime = Math.min(
-    Math.random() * (maxTime - minTime) + minTime,
-    videoDuration * 0.7
-  );
-
-  adTimeoutId.value = setTimeout(() => {
-    if (video && !video.paused) {
-      showAd(video, episodeIndex);
-    }
-  }, randomTime * 1000);
 };
+
 
 const showAd = (video, episodeIndex) => {
   video.pause();
