@@ -132,11 +132,12 @@
     <!-- Mobile View -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
       <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-black z-30">
-    <div class="text-center">
-      <span class="loading loading-spinner loading-lg text-primary"></span>
-      <p class="text-white mt-4">Memuat video...</p>
-    </div>
-  </div>
+        <div class="text-center">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+          <p class="text-white mt-4">Memuat video...</p>
+        </div>
+      </div>
+      
       <div 
         ref="mobileContainer"
         class="snap-y snap-mandatory h-full overflow-y-scroll"
@@ -147,172 +148,161 @@
           :key="episode.id"
           class="snap-start h-screen flex items-center justify-center relative"
         >
-            <div 
-        v-if="loadingIndex.has(index)" 
-        class="absolute inset-0 flex items-center justify-center bg-black/80 z-10"
-      >
-        <span class="loading loading-spinner loading-lg text-primary"></span>
-      </div>
+          <div 
+            v-if="loadingIndex.has(index)" 
+            class="absolute inset-0 flex items-center justify-center bg-black/80 z-10"
+          >
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
 
           <!-- Floating Watermark Mobile -->
           <div class="absolute top-4 right-4 text-white font-bold text-base opacity-70 pointer-events-none z-20 bg-black/30 px-3 py-1 rounded-lg backdrop-blur-sm">
             {{ setting.site_name }}
           </div>
 
-    <!-- Only load video if it's in the loadable range -->
-<video
-  v-if="shouldLoadVideo(index)" 
-  :ref="el => { if (el) videoRefs[index] = el }"
-  :src="nginxCacheVideo(getDefaultVideoUrl(episode) , dramaDetail?.id , currentIndex+1 ,slugify(dramaDetail?.title))"
-  class="w-full h-full object-cover"
-  controls
-  playsinline
-  :preload="index === currentIndex ? 'auto' : 'none'"
-  @loadstart="handleVideoLoading(index)"
-  @canplay="handleVideoCanPlay(index)"
-  @ended="handleVideoEnded(index)" 
-></video>
+          <!-- Only load video if it's current -->
+          <video
+            v-if="shouldLoadVideo(index)" 
+            :ref="el => { if (el) videoRefs[index] = el }"
+            :src="nginxCacheVideo(getDefaultVideoUrl(episode) , dramaDetail?.id , index+1 ,slugify(dramaDetail?.title))"
+            class="w-full h-full object-cover"
+            controls
+            playsinline
+            :preload="index === currentIndex ? 'auto' : 'metadata'"
+            @loadstart="handleVideoLoading(index)"
+            @canplay="handleVideoCanPlay(index)"
+            @error="handleVideoError(index)"
+            @ended="handleVideoEnded(index)" 
+          ></video>
 
-<!-- ✅ TAMBAHAN: Placeholder untuk video yang belum load -->
-<div 
-  v-else 
-  class="w-full h-full flex items-center justify-center bg-gray-900"
->
-  <div class="text-center text-white">
-    <span class="mdi mdi-play-circle-outline text-6xl mb-2"></span>
-    <p class="text-sm">Episode {{ index + 1 }}</p>
-  </div>
-</div>
+          <!-- Placeholder untuk video yang belum load -->
+          <div 
+            v-else 
+            class="w-full h-full flex items-center justify-center bg-gray-900"
+          >
+            <div class="text-center text-white">
+              <span class="mdi mdi-play-circle-outline text-6xl mb-2"></span>
+              <p class="text-sm">Episode {{ index + 1 }}</p>
+            </div>
+          </div>
 
           <!-- Episode Info Overlay -->
           <div class="absolute bottom-20 left-4 right-4 text-white">
             <h2 class="text-xl font-bold mb-1">{{dramaDetail.title}} - {{ episode.title }}</h2>
-            
           </div>
         </div>
       </div>
 
       <!-- Floating Buttons -->
       <div class="fixed right-4 bottom-32 flex flex-col gap-3 z-10">
-<button @click="router.visit('/')" class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20">
-  <span class="mdi mdi-home text-white text-2xl"></span>
-</button>
+        <button @click="router.visit('/')" class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20">
+          <span class="mdi mdi-home text-white text-2xl"></span>
+        </button>
 
-  <!-- Episode List Button -->
-  <button 
-    @click="openEpisodeDrawer"
-    class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
-  >
-    <span class="mdi mdi-format-list-numbered text-white text-2xl"></span>
-  </button>
+        <!-- Episode List Button -->
+        <button 
+          @click="openEpisodeDrawer"
+          class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
+        >
+          <span class="mdi mdi-format-list-numbered text-white text-2xl"></span>
+        </button>
 
-  <!-- Quality Button -->
-  <button 
-    @click="openQualityDrawer"
-    class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
-  >
-    <span class="mdi mdi-cog text-white text-2xl"></span>
-  </button>
-
-  
-
-</div>
-
+        <!-- Quality Button -->
+        <button 
+          @click="openQualityDrawer"
+          class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
+        >
+          <span class="mdi mdi-cog text-white text-2xl"></span>
+        </button>
+      </div>
 
       <!-- Episode Drawer -->
-    <div class="drawer drawer-end">
+      <div class="drawer drawer-end">
+        <!-- Drawer toggle -->
+        <input id="episode-drawer" type="checkbox" class="drawer-toggle" v-model="isEpisodeDrawerOpen" />
 
-  <!-- Drawer toggle -->
-  <input id="episode-drawer" type="checkbox" class="drawer-toggle" v-model="isEpisodeDrawerOpen" />
+        <div class="drawer-side z-20">
+          <label for="episode-drawer" class="drawer-overlay"></label>
 
-  <div class="drawer-side z-20">
-    <label for="episode-drawer" class="drawer-overlay"></label>
+          <div class="w-full h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-3xl shadow-xl">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-white/20">
+              <!-- Close Button -->
+              <label 
+                for="episode-drawer"
+                class="btn btn-sm btn-circle bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30"
+              >
+                <span class="mdi mdi-close text-white text-xl"></span>
+              </label>
 
-    <div class="w-full h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-3xl shadow-xl">
+              <h3 class="text-lg font-bold text-white">Pilih Episode</h3>
 
-      <!-- Header -->
-      <div class="flex items-center justify-between p-4 border-b border-white/20">
-        <!-- Close Button -->
-        <label 
-          for="episode-drawer"
-          class="btn btn-sm btn-circle bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30"
-        >
-          <span class="mdi mdi-close text-white text-xl"></span>
-        </label>
+              <!-- Dummy element biar title center -->
+              <div class="w-8"></div>
+            </div>
 
-        <h3 class="text-lg font-bold text-white">Pilih Episode</h3>
-
-        <!-- Dummy element biar title center -->
-        <div class="w-8"></div>
-      </div>
-
-      <!-- Episode List -->
-      <div class="menu p-4">
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="(ep, index) in episodes"
-            :key="ep.id"
-            @click="selectEpisodeMobile(index)"
-            class="btn btn-sm min-w-[44px] h-11 font-semibold"
-            :class="{ 
-              'btn-primary': currentIndex === index, 
-              'btn-outline btn-ghost text-white border-white/30': currentIndex !== index 
-            }"
-          >
-            {{ index + 1 }}
-          </button>
+            <!-- Episode List -->
+            <div class="menu p-4">
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="(ep, index) in episodes"
+                  :key="ep.id"
+                  @click="selectEpisodeMobile(index)"
+                  class="btn btn-sm min-w-[44px] h-11 font-semibold"
+                  :class="{ 
+                    'btn-primary': currentIndex === index, 
+                    'btn-outline btn-ghost text-white border-white/30': currentIndex !== index 
+                  }"
+                >
+                  {{ index + 1 }}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
+      <!-- Quality Drawer -->
+      <div class="drawer drawer-end">
+        <input id="quality-drawer" type="checkbox" class="drawer-toggle" v-model="isQualityDrawerOpen" />
 
+        <div class="drawer-side z-20">
+          <label for="quality-drawer" class="drawer-overlay"></label>
 
-     <!-- Quality Drawer -->
-<div class="drawer drawer-end">
-  <input id="quality-drawer" type="checkbox" class="drawer-toggle" v-model="isQualityDrawerOpen" />
+          <div class="w-80 h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-t-3xl shadow-xl">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-white/20">
+              <label 
+                for="quality-drawer"
+                class="btn btn-sm btn-circle bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30"
+              >
+                <span class="mdi mdi-close text-white text-xl"></span>
+              </label>
 
-  <div class="drawer-side z-20">
-    <label for="quality-drawer" class="drawer-overlay"></label>
+              <h3 class="text-lg font-bold text-white">Pilih Kualitas Video</h3>
 
-    <div class="w-80 h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-t-3xl shadow-xl">
+              <div class="w-8"></div>
+            </div>
 
-      <!-- Header -->
-      <div class="flex items-center justify-between p-4 border-b border-white/20">
-        <label 
-          for="quality-drawer"
-          class="btn btn-sm btn-circle bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30"
-        >
-          <span class="mdi mdi-close text-white text-xl"></span>
-        </label>
-
-        <h3 class="text-lg font-bold text-white">Pilih Kualitas Video</h3>
-
-        <div class="w-8"></div>
-      </div>
-
-      <!-- Content -->
-      <div class="menu p-4">
-        <div class="flex flex-col gap-2">
-          <button
-            v-for="url in currentEpisode?.video_urls"
-            :key="url.quality"
-            @click="changeQualityMobile(url.url)"
-            class="btn btn-outline text-white border-white/40 hover:bg-white/20"
-            :class="{ 
-              'btn-active bg-white/30 text-black border-white': currentVideoUrl === url.url 
-            }"
-          >
-            {{ url.quality }}p
-          </button>
+            <!-- Content -->
+            <div class="menu p-4">
+              <div class="flex flex-col gap-2">
+                <button
+                  v-for="url in currentEpisode?.video_urls"
+                  :key="url.quality"
+                  @click="changeQualityMobile(url.url)"
+                  class="btn btn-outline text-white border-white/40 hover:bg-white/20"
+                  :class="{ 
+                    'btn-active bg-white/30 text-black border-white': currentVideoUrl === url.url 
+                  }"
+                >
+                  {{ url.quality }}p
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-    </div>
-  </div>
-</div>
-
     </div>
   </div>
 </template>
@@ -323,6 +313,7 @@ import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/ap
 import { nginxCacheVideo, siteSetting, slugify } from '../../utils/helpers';
 import { router } from '@inertiajs/vue3';
 import Loading from './Loading.vue';
+
 const setting = siteSetting();
 const props = defineProps({bookId:String,episode:String});
 const episodes = ref([]);
@@ -344,7 +335,7 @@ const showAdModal = ref(false);
 const adShownForEpisode = ref(new Set());
 const adTimeoutId = ref(null);
 
-const currentEpisode = computed(() => episodes.value[currentIndex.value] );
+const currentEpisode = computed(() => episodes.value[currentIndex.value]);
 
 const getDefaultVideoUrl = (episode) => {
   const defaultVideo = episode?.video_urls?.find(v => v.is_default);
@@ -372,12 +363,11 @@ const selectEpisode = (index) => {
     }, 500);
   }
 };
+
+// ✅ PERBAIKAN: Hanya load current video saja di mobile
 const shouldLoadVideo = (index) => {
-  if (!isMobile.value) {
-    return index === currentIndex.value; // Desktop: 1 video saja
-  }
-  const distance = Math.abs(index - currentIndex.value);
-  return distance <= loadRange.value; // Mobile: current + adjacent
+  // Desktop dan Mobile: hanya load current video
+  return index === currentIndex.value;
 };
 
 const selectEpisodeMobile = (index) => {
@@ -426,7 +416,7 @@ const previousEpisode = () => {
 const changeQuality = (url) => {
   const currentTime = videoPlayer.value?.currentTime || 0;
   currentVideoUrl.value = url;
-  updateURL(newIndex + 1);
+  
   setTimeout(() => {
     if (videoPlayer.value) {
       videoPlayer.value.currentTime = currentTime;
@@ -470,6 +460,7 @@ const handleMobileScroll = (e) => {
       
       currentIndex.value = newIndex;
       currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+      updateURL(newIndex + 1);
       
       // Auto play current video
       const currentVideo = videoRefs.value[newIndex];
@@ -480,15 +471,19 @@ const handleMobileScroll = (e) => {
   }, 300);
 };
 
-
+// ✅ PERBAIKAN: Tambah handler untuk loading
 const handleVideoLoading = (index) => {
+  console.log('Video loading:', index);
   loadingIndex.value.add(index);
 };
 
-
+// ✅ PERBAIKAN: Fix loading state
 const handleVideoCanPlay = (index) => {
+  console.log('Video can play:', index);
   loadingIndex.value.delete(index);
-  if (index === 0) {
+  
+  // Set loading false ketika current video ready
+  if (index === currentIndex.value) {
     isLoading.value = false;
   }
   
@@ -503,9 +498,20 @@ const handleVideoCanPlay = (index) => {
     }
   }
 };
-const handleVideoEnded = (index) => {
+
+// ✅ PERBAIKAN: Tambah error handler
+const handleVideoError = (index) => {
+  console.error('Video error at index:', index);
+  loadingIndex.value.delete(index);
   
-  if (episodes.value.length - 1) {
+  // Tetap hapus loading meski error
+  if (index === currentIndex.value) {
+    isLoading.value = false;
+  }
+};
+
+const handleVideoEnded = (index) => {
+  if (index < episodes.value.length - 1) {
     // Auto scroll to next episode
     setTimeout(() => {
       const container = mobileContainer.value;
@@ -515,8 +521,8 @@ const handleVideoEnded = (index) => {
           behavior: 'smooth'
         });
       }
-      updateURL(currentIndex.value+1);
-    }, 500); // Small delay for better UX
+      updateURL(index + 2);
+    }, 500);
   }
 };
 
@@ -626,52 +632,62 @@ const setupDesktopAdListener = () => {
   video.addEventListener('timeupdate', checkAdTiming);
 };
 
-
+// ✅ PERBAIKAN: Better error handling dan timeout fallback
 onMounted(async () => {
   isMobile.value = window.innerWidth < 1024;
 
-const handleResize = () => {
-  isMobile.value = window.innerWidth < 1024;
-};
-window.addEventListener('resize', handleResize);
-isLoading.value=true;
-  let r = await getPlayerVideo(props.bookId,props.episode);
-  let x = await getTheaterDetail(props.bookId);
-  episodes.value = r?.data;
-  dramaDetail.value = x?.data;
-isLoading.value=false;
-  if (episodes.value.length > 0) {
-    // Set current index based on props.episode from URL
-    const episodeNum = parseInt(props.episode) || 1;
-    currentIndex.value = episodeNum - 1; // Convert to 0-based index
+  const handleResize = () => {
+    isMobile.value = window.innerWidth < 1024;
+  };
+  window.addEventListener('resize', handleResize);
+  
+  isLoading.value = true;
+  
+  try {
+    let r = await getPlayerVideo(props.bookId, props.episode);
+    let x = await getTheaterDetail(props.bookId);
+    episodes.value = r?.data;
+    dramaDetail.value = x?.data;
     
-    // Ensure index is within bounds
-    if (currentIndex.value < 0) currentIndex.value = 0;
-    if (currentIndex.value >= episodes.value.length) currentIndex.value = episodes.value.length - 1;
-    
-    currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
-    
-    // For mobile view, scroll to correct episode
-        if (mobileContainer.value) {
-      setTimeout(() => {
-        mobileContainer.value.scrollTo({
-          top: currentIndex.value * window.innerHeight,
-          behavior: 'auto'
-        });
-      }, 100);
+    if (episodes.value.length > 0) {
+      const episodeNum = parseInt(props.episode) || 1;
+      currentIndex.value = episodeNum - 1;
+      
+      if (currentIndex.value < 0) currentIndex.value = 0;
+      if (currentIndex.value >= episodes.value.length) currentIndex.value = episodes.value.length - 1;
+      
+      currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
+      
+      // For mobile view, scroll to correct episode
+      if (isMobile.value && mobileContainer.value) {
+        setTimeout(() => {
+          mobileContainer.value.scrollTo({
+            top: currentIndex.value * window.innerHeight,
+            behavior: 'auto'
+          });
+        }, 100);
+      }
+      
+      // Setup ad for desktop
+      if (!isMobile.value && videoPlayer.value) {
+        setTimeout(() => {
+          setupDesktopAdListener();
+        }, 1000);
+      }
     }
-    
-    // Setup ad for desktop
-    if (!isMobile.value && videoPlayer.value) {
-      setTimeout(() => {
-        setupDesktopAdListener();
-      }, 1000);
-    }
-
+  } catch (error) {
+    console.error('Error loading video data:', error);
+  } finally {
+    // Fallback: hapus loading setelah 3 detik jika masih loading
+    setTimeout(() => {
+      if (isLoading.value) {
+        console.log('Forcing loading to false after timeout');
+        isLoading.value = false;
+      }
+    }, 3000);
   }
 });
 
-// TAMBAHKAN watch ini setelah onMounted:
 watch(() => props.episode, (newEpisode) => {
   if (newEpisode && episodes.value.length > 0) {
     const episodeNum = parseInt(newEpisode) || 1;
@@ -680,7 +696,7 @@ watch(() => props.episode, (newEpisode) => {
     if (newIndex >= 0 && newIndex < episodes.value.length && newIndex !== currentIndex.value) {
       selectEpisode(newIndex);
       
-      if (mobileContainer.value) {
+      if (isMobile.value && mobileContainer.value) {
         mobileContainer.value.scrollTo({
           top: newIndex * window.innerHeight,
           behavior: 'smooth'
