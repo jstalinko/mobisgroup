@@ -1,11 +1,9 @@
 <template>
   <div class="video-player-container">
-   
-    
     <!-- Desktop View -->
     <div class="hidden lg:block min-h-screen bg-base-200" v-if="!isMobile">
       <div class="container mx-auto p-4">
-         <!-- Video Area -->
+        <!-- Video Area -->
         <div class="bg-black rounded-lg overflow-hidden mb-4">
           <div class="relative aspect-video">
             <video
@@ -104,7 +102,7 @@
     </div>
     <Loading :show="isLoading && !isMobile"/>
 
-       <div v-if="showAdModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div v-if="showAdModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div class="bg-base-100 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
         <div class="relative bg-gradient-to-br from-primary/20 to-secondary/20 p-8">
           <div class="text-center">
@@ -131,7 +129,8 @@
 
     <!-- Mobile View -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
-      <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-black z-30">
+      <!-- 🔥 PERBAIKAN: Initial loading hanya untuk first load -->
+      <div v-if="isInitialLoading" class="absolute inset-0 flex items-center justify-center bg-black z-30">
         <div class="text-center">
           <span class="loading loading-spinner loading-lg text-primary"></span>
           <p class="text-white mt-4">Memuat video...</p>
@@ -148,11 +147,14 @@
           :key="episode.id"
           class="snap-start h-screen flex items-center justify-center relative"
         >
+          <!-- 🔥 PERBAIKAN: Loading per video lebih kecil dan transparan -->
           <div 
-            v-if="loadingIndex.has(index)" 
-            class="absolute inset-0 flex items-center justify-center bg-black/80 z-10"
+            v-if="loadingIndex.has(index) && index === currentIndex" 
+            class="absolute inset-0 flex items-center justify-center bg-transparent z-10 pointer-events-none"
           >
-            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <div class="bg-black/50 rounded-full p-4">
+              <span class="loading loading-spinner loading-md text-primary"></span>
+            </div>
           </div>
 
           <!-- Floating Watermark Mobile -->
@@ -160,19 +162,27 @@
             {{ setting.site_name }}
           </div>
 
-          <!-- Only load video if it's current -->
+          <!-- 🔥 PERBAIKAN: Tambah key untuk force re-render saat ganti quality -->
           <video
-            v-if="shouldLoadVideo(index)" 
+            v-if="shouldLoadVideo(index)"
+            :key="`video-${index}-${currentVideoUrl}`"
             :ref="el => { if (el) videoRefs[index] = el }"
-            :src="nginxCacheVideo(getDefaultVideoUrl(episode) , dramaDetail?.id , index+1 ,slugify(dramaDetail?.title))"
+            :src="nginxCacheVideo(index === currentIndex ? currentVideoUrl : getDefaultVideoUrl(episode), dramaDetail?.id, index+1, slugify(dramaDetail?.title))"
             class="w-full h-full object-cover"
             controls
             playsinline
-            :preload="index === currentIndex ? 'auto' : 'metadata'"
+            webkit-playsinline
+            x5-playsinline
+            x5-video-player-type="h5"
+            x5-video-player-fullscreen="true"
+            :preload="index === currentIndex ? 'auto' : 'none'"
             @loadstart="handleVideoLoading(index)"
+            @loadeddata="handleVideoLoadedData(index)"
             @canplay="handleVideoCanPlay(index)"
-            @error="handleVideoError(index)"
-            @ended="handleVideoEnded(index)" 
+            @playing="handleVideoPlaying(index)"
+            @waiting="handleVideoWaiting(index)"
+            @error="handleVideoError(index, $event)"
+            @ended="handleVideoEnded(index)"
           ></video>
 
           <!-- Placeholder untuk video yang belum load -->
@@ -187,8 +197,8 @@
           </div>
 
           <!-- Episode Info Overlay -->
-          <div class="absolute bottom-20 left-4 right-4 text-white">
-            <h2 class="text-xl font-bold mb-1">{{dramaDetail.title}} - {{ episode.title }}</h2>
+          <div class="absolute bottom-20 left-4 right-4 text-white z-10 pointer-events-none">
+            <h2 class="text-xl font-bold mb-1 drop-shadow-lg">{{dramaDetail.title}} - {{ episode.title }}</h2>
           </div>
         </div>
       </div>
@@ -199,7 +209,6 @@
           <span class="mdi mdi-home text-white text-2xl"></span>
         </button>
 
-        <!-- Episode List Button -->
         <button 
           @click="openEpisodeDrawer"
           class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
@@ -207,7 +216,6 @@
           <span class="mdi mdi-format-list-numbered text-white text-2xl"></span>
         </button>
 
-        <!-- Quality Button -->
         <button 
           @click="openQualityDrawer"
           class="btn btn-circle shadow-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
@@ -218,30 +226,20 @@
 
       <!-- Episode Drawer -->
       <div class="drawer drawer-end">
-        <!-- Drawer toggle -->
         <input id="episode-drawer" type="checkbox" class="drawer-toggle" v-model="isEpisodeDrawerOpen" />
-
         <div class="drawer-side z-20">
           <label for="episode-drawer" class="drawer-overlay"></label>
-
           <div class="w-full h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-3xl shadow-xl">
-            <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b border-white/20">
-              <!-- Close Button -->
               <label 
                 for="episode-drawer"
                 class="btn btn-sm btn-circle bg-white/20 backdrop-blur border border-white/30 hover:bg-white/30"
               >
                 <span class="mdi mdi-close text-white text-xl"></span>
               </label>
-
               <h3 class="text-lg font-bold text-white">Pilih Episode</h3>
-
-              <!-- Dummy element biar title center -->
               <div class="w-8"></div>
             </div>
-
-            <!-- Episode List -->
             <div class="menu p-4">
               <div class="flex flex-wrap gap-1.5">
                 <button
@@ -265,12 +263,9 @@
       <!-- Quality Drawer -->
       <div class="drawer drawer-end">
         <input id="quality-drawer" type="checkbox" class="drawer-toggle" v-model="isQualityDrawerOpen" />
-
         <div class="drawer-side z-20">
           <label for="quality-drawer" class="drawer-overlay"></label>
-
           <div class="w-80 h-auto bg-white/10 backdrop-blur-xl text-base-content rounded-t-3xl shadow-xl">
-            <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b border-white/20">
               <label 
                 for="quality-drawer"
@@ -278,13 +273,9 @@
               >
                 <span class="mdi mdi-close text-white text-xl"></span>
               </label>
-
               <h3 class="text-lg font-bold text-white">Pilih Kualitas Video</h3>
-
               <div class="w-8"></div>
             </div>
-
-            <!-- Content -->
             <div class="menu p-4">
               <div class="flex flex-col gap-2">
                 <button
@@ -308,14 +299,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { getChapterDetail,getTheaterDetail,getPlayerVideo } from '../../utils/api';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { getChapterDetail, getTheaterDetail, getPlayerVideo } from '../../utils/api';
 import { nginxCacheVideo, siteSetting, slugify } from '../../utils/helpers';
 import { router } from '@inertiajs/vue3';
 import Loading from './Loading.vue';
 
 const setting = siteSetting();
-const props = defineProps({bookId:String,episode:String});
+const props = defineProps({bookId:String, episode:String});
 const episodes = ref([]);
 const dramaDetail = ref([]);
 const currentIndex = ref(0);
@@ -327,9 +318,10 @@ const isEpisodeDrawerOpen = ref(false);
 const isQualityDrawerOpen = ref(false);
 const scrollTimeout = ref(null);
 const isLoading = ref(true);
+const isInitialLoading = ref(true); // 🔥 BARU: Pisahkan initial loading
 const loadingIndex = ref(new Set()); 
-const loadRange = ref(2);
-const isMobile = ref(false); 
+const isMobile = ref(false);
+const isScrolling = ref(false); // 🔥 BARU: Track scrolling state
 
 const showAdModal = ref(false);
 const adShownForEpisode = ref(new Set());
@@ -339,7 +331,7 @@ const currentEpisode = computed(() => episodes.value[currentIndex.value]);
 
 const getDefaultVideoUrl = (episode) => {
   const defaultVideo = episode?.video_urls?.find(v => v.is_default);
-  return defaultVideo ? defaultVideo.url : episode?.video_urls[0].url;
+  return defaultVideo ? defaultVideo.url : episode?.video_urls?.[0]?.url;
 };
 
 const updateURL = (episodeNum) => {
@@ -364,41 +356,45 @@ const selectEpisode = (index) => {
   }
 };
 
-// ✅ PERBAIKAN: Hanya load current video saja di mobile
 const shouldLoadVideo = (index) => {
-  // Desktop dan Mobile: hanya load current video
   return index === currentIndex.value;
 };
 
-const selectEpisodeMobile = (index) => {
-  // Pause all videos
-  videoRefs.value.forEach((video) => {
-    if (video) {
+// 🔥 PERBAIKAN: Better pause handling
+const pauseAllVideosExcept = (activeIndex) => {
+  videoRefs.value.forEach((video, index) => {
+    if (video && index !== activeIndex) {
       video.pause();
+      // Jangan reset currentTime untuk smooth transition
     }
   });
+};
+
+const selectEpisodeMobile = (index) => {
+  pauseAllVideosExcept(-1);
   
   currentIndex.value = index;
   currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
   isEpisodeDrawerOpen.value = false;
   updateURL(index + 1);
   
-  // Scroll to episode
   const container = mobileContainer.value;
   if (container) {
+    isScrolling.value = true;
     container.scrollTo({
       top: index * window.innerHeight,
       behavior: 'smooth'
     });
+    
+    // 🔥 PERBAIKAN: Wait for scroll to finish
+    setTimeout(() => {
+      isScrolling.value = false;
+      const currentVideo = videoRefs.value[index];
+      if (currentVideo && currentVideo.readyState >= 3) {
+        currentVideo.play().catch(err => console.log('Play error:', err));
+      }
+    }, 600);
   }
-  
-  // Auto play after scroll
-  setTimeout(() => {
-    const currentVideo = videoRefs.value[index];
-    if (currentVideo) {
-      currentVideo.play().catch(err => console.log('Play error:', err));
-    }
-  }, 500);
 };
 
 const nextEpisode = () => {
@@ -417,30 +413,40 @@ const changeQuality = (url) => {
   const currentTime = videoPlayer.value?.currentTime || 0;
   currentVideoUrl.value = url;
   
-  setTimeout(() => {
+  nextTick(() => {
     if (videoPlayer.value) {
       videoPlayer.value.currentTime = currentTime;
-      videoPlayer.value.play();
+      videoPlayer.value.play().catch(err => console.log('Play error:', err));
     }
-  }, 100);
+  });
 };
 
+// 🔥 PERBAIKAN: Better quality change for mobile
 const changeQualityMobile = (url) => {
   const currentVideo = videoRefs.value[currentIndex.value];
   const currentTime = currentVideo?.currentTime || 0;
+  const wasPlaying = currentVideo && !currentVideo.paused;
+  
   currentVideoUrl.value = url;
   isQualityDrawerOpen.value = false;
   
-  setTimeout(() => {
-    if (currentVideo) {
-      currentVideo.src = url;
-      currentVideo.currentTime = currentTime;
-      currentVideo.play();
-    }
-  }, 100);
+  // Force re-render dengan nextTick
+  nextTick(() => {
+    setTimeout(() => {
+      const newVideo = videoRefs.value[currentIndex.value];
+      if (newVideo) {
+        newVideo.currentTime = currentTime;
+        if (wasPlaying) {
+          newVideo.play().catch(err => console.log('Play error:', err));
+        }
+      }
+    }, 100);
+  });
 };
 
 const handleMobileScroll = (e) => {
+  isScrolling.value = true;
+  
   if (scrollTimeout.value) {
     clearTimeout(scrollTimeout.value);
   }
@@ -451,46 +457,55 @@ const handleMobileScroll = (e) => {
     const newIndex = Math.round(scrollTop / window.innerHeight);
     
     if (newIndex !== currentIndex.value && newIndex >= 0 && newIndex < episodes.value.length) {
-      // Pause all videos
-      videoRefs.value.forEach((video) => {
-        if (video) {
-          video.pause();
-        }
-      });
+      pauseAllVideosExcept(-1);
       
       currentIndex.value = newIndex;
       currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
       updateURL(newIndex + 1);
       
-      // Auto play current video
-      const currentVideo = videoRefs.value[newIndex];
-      if (currentVideo) {
-        currentVideo.play().catch(err => console.log('Play error:', err));
-      }
+      nextTick(() => {
+        setTimeout(() => {
+          isScrolling.value = false;
+          const currentVideo = videoRefs.value[newIndex];
+          if (currentVideo && currentVideo.readyState >= 3) {
+            currentVideo.play().catch(err => console.log('Play error:', err));
+          }
+        }, 200);
+      });
+    } else {
+      isScrolling.value = false;
     }
-  }, 300);
+  }, 150);
 };
 
-// ✅ PERBAIKAN: Tambah handler untuk loading
+// 🔥 PERBAIKAN: Lebih detail event handling
 const handleVideoLoading = (index) => {
-  console.log('Video loading:', index);
-  loadingIndex.value.add(index);
+  if (index === currentIndex.value) {
+    loadingIndex.value.add(index);
+    console.log(`Video ${index} loading started`);
+  }
 };
 
-// ✅ PERBAIKAN: Fix loading state
+const handleVideoLoadedData = (index) => {
+  console.log(`Video ${index} data loaded`);
+  if (index === currentIndex.value) {
+    loadingIndex.value.delete(index);
+  }
+};
+
 const handleVideoCanPlay = (index) => {
-  console.log('Video can play:', index);
+  console.log(`Video ${index} can play`);
   loadingIndex.value.delete(index);
   
-  // Set loading false ketika current video ready
   if (index === currentIndex.value) {
-    isLoading.value = false;
-  }
-  
-  if (index === currentIndex.value) {
-    const video = videoRefs.value[index];
-    if (video) {
-      video.play().catch(err => console.log('Play error:', err));
+    isInitialLoading.value = false;
+    
+    // Auto-play jika bukan sedang scrolling
+    if (!isScrolling.value) {
+      const video = videoRefs.value[index];
+      if (video && video.paused) {
+        video.play().catch(err => console.log('Play prevented:', err));
+      }
       
       if (isMobile.value) {
         scheduleAdForVideo(video, index);
@@ -499,29 +514,39 @@ const handleVideoCanPlay = (index) => {
   }
 };
 
-// ✅ PERBAIKAN: Tambah error handler
-const handleVideoError = (index) => {
-  console.error('Video error at index:', index);
+const handleVideoPlaying = (index) => {
   loadingIndex.value.delete(index);
-  
-  // Tetap hapus loading meski error
+  console.log(`Video ${index} is playing`);
+};
+
+const handleVideoWaiting = (index) => {
   if (index === currentIndex.value) {
-    isLoading.value = false;
+    loadingIndex.value.add(index);
+    console.log(`Video ${index} is buffering`);
+  }
+};
+
+const handleVideoError = (index, event) => {
+  loadingIndex.value.delete(index);
+  console.error(`Video ${index} error:`, event?.target?.error);
+  
+  if (index === currentIndex.value) {
+    isInitialLoading.value = false;
   }
 };
 
 const handleVideoEnded = (index) => {
-  if (index < episodes.value.length - 1) {
-    // Auto scroll to next episode
+  if (isMobile.value && index < episodes.value.length - 1) {
     setTimeout(() => {
       const container = mobileContainer.value;
       if (container) {
+        isScrolling.value = true;
         container.scrollTo({
           top: (index + 1) * window.innerHeight,
           behavior: 'smooth'
         });
+        setTimeout(() => isScrolling.value = false, 600);
       }
-      updateURL(index + 2);
     }, 500);
   }
 };
@@ -535,7 +560,7 @@ const openQualityDrawer = () => {
 };
 
 const shareToWhatsApp = () => {
-  const text = `${currentEpisode.value.title} - ${currentEpisode.value.description}`;
+  const text = `${currentEpisode.value.title} - ${dramaDetail.value?.title}`;
   const url = window.location.href;
   window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
 };
@@ -546,7 +571,7 @@ const shareToFacebook = () => {
 };
 
 const shareToTwitter = () => {
-  const text = `${currentEpisode.value.title} - ${currentEpisode.value.description}`;
+  const text = `${currentEpisode.value.title} - ${dramaDetail.value?.title}`;
   const url = window.location.href;
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
 };
@@ -557,7 +582,6 @@ const copyLink = () => {
   });
 };
 
-// Ad functions
 const scheduleAdForVideo = (video, episodeIndex) => {
   if (!setting?.ads?.active || adShownForEpisode.value.has(episodeIndex)) {
     return;
@@ -589,7 +613,6 @@ const showAd = (video, episodeIndex) => {
 };
 
 const closeAdAndContinue = () => {
-  // Open ad URL in new tab
   if (setting?.ads?.ad_url) {
     window.open(setting.ads.ad_url, '_blank');
   }
@@ -632,59 +655,60 @@ const setupDesktopAdListener = () => {
   video.addEventListener('timeupdate', checkAdTiming);
 };
 
-// ✅ PERBAIKAN: Better error handling dan timeout fallback
 onMounted(async () => {
   isMobile.value = window.innerWidth < 1024;
 
   const handleResize = () => {
-    isMobile.value = window.innerWidth < 1024;
+    const newIsMobile = window.innerWidth < 1024;
+    if (newIsMobile !== isMobile.value) {
+      location.reload();
+    }
   };
   window.addEventListener('resize', handleResize);
   
   isLoading.value = true;
+  isInitialLoading.value = true;
   
   try {
-    let r = await getPlayerVideo(props.bookId, props.episode);
-    let x = await getTheaterDetail(props.bookId);
-    episodes.value = r?.data;
-    dramaDetail.value = x?.data;
+    const [r, x] = await Promise.all([
+      getPlayerVideo(props.bookId, props.episode),
+      getTheaterDetail(props.bookId)
+    ]);
+    
+    episodes.value = r?.data || [];
+    dramaDetail.value = x?.data || {};
     
     if (episodes.value.length > 0) {
       const episodeNum = parseInt(props.episode) || 1;
-      currentIndex.value = episodeNum - 1;
-      
-      if (currentIndex.value < 0) currentIndex.value = 0;
-      if (currentIndex.value >= episodes.value.length) currentIndex.value = episodes.value.length - 1;
+      currentIndex.value = Math.max(0, Math.min(episodeNum - 1, episodes.value.length - 1));
       
       currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
       
-      // For mobile view, scroll to correct episode
-      if (isMobile.value && mobileContainer.value) {
+      if (isMobile.value) {
+        await nextTick();
         setTimeout(() => {
-          mobileContainer.value.scrollTo({
-            top: currentIndex.value * window.innerHeight,
-            behavior: 'auto'
-          });
+          if (mobileContainer.value) {
+            mobileContainer.value.scrollTo({
+              top: currentIndex.value * window.innerHeight,
+              behavior: 'auto'
+            });
+          }
         }, 100);
-      }
-      
-      // Setup ad for desktop
-      if (!isMobile.value && videoPlayer.value) {
-        setTimeout(() => {
-          setupDesktopAdListener();
-        }, 1000);
+      } else if (videoPlayer.value) {
+        setTimeout(() => setupDesktopAdListener(), 1000);
       }
     }
   } catch (error) {
     console.error('Error loading video data:', error);
   } finally {
-    // Fallback: hapus loading setelah 3 detik jika masih loading
+    isLoading.value = false;
+    // 🔥 PERBAIKAN: Fallback timeout untuk initial loading
     setTimeout(() => {
-      if (isLoading.value) {
-        console.log('Forcing loading to false after timeout');
-        isLoading.value = false;
+      if (isInitialLoading.value) {
+        console.log('Force clearing initial loading');
+        isInitialLoading.value = false;
       }
-    }, 3000);
+    }, 5000);
   }
 });
 
@@ -694,25 +718,19 @@ watch(() => props.episode, (newEpisode) => {
     const newIndex = episodeNum - 1;
     
     if (newIndex >= 0 && newIndex < episodes.value.length && newIndex !== currentIndex.value) {
-      selectEpisode(newIndex);
-      
-      if (isMobile.value && mobileContainer.value) {
-        mobileContainer.value.scrollTo({
-          top: newIndex * window.innerHeight,
-          behavior: 'smooth'
-        });
+      if (isMobile.value) {
+        selectEpisodeMobile(newIndex);
+      } else {
+        selectEpisode(newIndex);
       }
     }
   }
 });
 
 onUnmounted(() => {
-  if (scrollTimeout.value) {
-    clearTimeout(scrollTimeout.value);
-  }
-  if (adTimeoutId.value) {
-    clearTimeout(adTimeoutId.value);
-  }
+  if (scrollTimeout.value) clearTimeout(scrollTimeout.value);
+  if (adTimeoutId.value) clearTimeout(adTimeoutId.value);
+  pauseAllVideosExcept(-1);
 });
 </script>
 
@@ -721,7 +739,6 @@ onUnmounted(() => {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Hide scrollbar for mobile snap scroll */
 .snap-y::-webkit-scrollbar {
   display: none;
 }
@@ -729,10 +746,21 @@ onUnmounted(() => {
 .snap-y {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
 }
 
-/* Drawer animation */
+.snap-start {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 .drawer-side > * {
   transition: transform 0.3s ease-in-out;
+}
+
+/* Prevent iOS bounce */
+body {
+  overscroll-behavior: none;
 }
 </style>
