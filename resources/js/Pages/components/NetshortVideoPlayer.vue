@@ -103,6 +103,31 @@
       </div>
     </div>
     <Loading :show="isLoading && !isMobile"/>
+       <div v-if="showAdModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div class="bg-base-100 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="relative bg-gradient-to-br from-primary/20 to-secondary/20 p-8">
+          <div class="text-center">
+            <div class="mb-6">
+              <span class="mdi mdi-play-circle-outline text-7xl text-primary"></span>
+            </div>
+            <h3 class="text-3xl font-bold mb-3">Iklan</h3>
+            <p class="text-base-content/70 text-lg mb-2">Untuk melanjutkan menonton,</p>
+            <p class="text-base-content/70 text-lg">silakan klik tombol di bawah</p>
+          </div>
+        </div>
+        
+        <div class="p-6">
+          <button 
+            @click="closeAdAndContinue"
+            class="btn btn-primary btn-block btn-lg gap-2 shadow-lg hover:scale-105 transition-transform"
+          >
+            <span class="mdi mdi-play text-xl"></span>
+            Klik disini untuk melanjutkan
+          </button>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Mobile View -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
@@ -268,7 +293,11 @@ const scrollTimeout = ref(null);
 const isLoading = ref(true);
 const loadingIndex = ref(new Set());
 const loadRange = ref(2);
-const isMobile = ref(false); // ✅ TAMBAHAN BARU
+const isMobile = ref(false); 
+
+const showAdModal = ref(false);
+const adShownForEpisode = ref(new Set());
+const adTimeoutId = ref(null);
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value]);
 
@@ -290,13 +319,19 @@ const pauseAllVideosExcept = (activeIndex) => {
     }
   });
 };
-
 const selectEpisode = (index) => {
   currentIndex.value = index;
   if (videoPlayer.value) {
     videoPlayer.value.load();
   }
-  updateURL(episodes.value[index].episode); 
+  updateURL(episodes.value[index].episode);
+  
+  // Setup ad for desktop
+  if (!isMobile.value) {
+    setTimeout(() => {
+      setupDesktopAdListener();
+    }, 500);
+  }
 };
 
 const selectEpisodeMobile = (index) => {
@@ -378,9 +413,89 @@ const handleVideoLoading = (index) => {
 
 const handleVideoCanPlay = (index) => {
   loadingIndex.value.delete(index);
-  if (index === 0 && isMobile.value) { // ✅ TAMBAH CHECK MOBILE
+  if (index === 0 && isMobile.value) {
     isLoading.value = false;
   }
+  
+  // Schedule ad for mobile
+  if (isMobile.value && index === currentIndex.value) {
+    const video = videoRefs.value[index];
+    if (video) {
+      scheduleAdForVideo(video, index);
+    }
+  }
+};const scheduleAdForVideo = (video, episodeIndex) => {
+  if (!setting?.ads?.active || adShownForEpisode.value.has(episodeIndex)) {
+    return;
+  }
+
+  if (adTimeoutId.value) {
+    clearTimeout(adTimeoutId.value);
+  }
+
+  const minTime = 30;
+  const maxTime = 60;
+  const videoDuration = video.duration || 120;
+  const randomTime = Math.min(
+    Math.random() * (maxTime - minTime) + minTime,
+    videoDuration * 0.7
+  );
+
+  adTimeoutId.value = setTimeout(() => {
+    if (video && !video.paused) {
+      showAd(video, episodeIndex);
+    }
+  }, randomTime * 1000);
+};
+
+const showAd = (video, episodeIndex) => {
+  video.pause();
+  showAdModal.value = true;
+  adShownForEpisode.value.add(episodeIndex);
+};
+
+const closeAdAndContinue = () => {
+  // Open ad URL in new tab
+  if (setting?.ads?.ad_url) {
+    window.open(setting.ads.ad_url, '_blank');
+  }
+  
+  showAdModal.value = false;
+  
+  const currentVideo = isMobile.value 
+    ? videoRefs.value[currentIndex.value]
+    : videoPlayer.value;
+    
+  if (currentVideo) {
+    currentVideo.play().catch(err => console.log('Play error:', err));
+  }
+};
+
+const setupDesktopAdListener = () => {
+  if (!videoPlayer.value || !setting?.ads?.active) return;
+  
+  const video = videoPlayer.value;
+  let adScheduled = false;
+
+  const checkAdTiming = () => {
+    if (adScheduled || adShownForEpisode.value.has(currentIndex.value)) return;
+    
+    const currentTime = video.currentTime;
+    const duration = video.duration || 120;
+    
+    const randomTime = Math.min(
+      Math.random() * 30 + 30,
+      duration * 0.7
+    );
+    
+    if (currentTime >= randomTime) {
+      adScheduled = true;
+      showAd(video, currentIndex.value);
+      video.removeEventListener('timeupdate', checkAdTiming);
+    }
+  };
+
+  video.addEventListener('timeupdate', checkAdTiming);
 };
 
 const handleVideoEnded = (index) => {
@@ -428,6 +543,79 @@ const copyLink = () => {
     alert('Link berhasil disalin!');
   });
 };
+const scheduleAdForVideo = (video, episodeIndex) => {
+  if (!setting?.ads?.active || adShownForEpisode.value.has(episodeIndex)) {
+    return;
+  }
+
+  if (adTimeoutId.value) {
+    clearTimeout(adTimeoutId.value);
+  }
+
+  const minTime = 30;
+  const maxTime = 60;
+  const videoDuration = video.duration || 120;
+  const randomTime = Math.min(
+    Math.random() * (maxTime - minTime) + minTime,
+    videoDuration * 0.7
+  );
+
+  adTimeoutId.value = setTimeout(() => {
+    if (video && !video.paused) {
+      showAd(video, episodeIndex);
+    }
+  }, randomTime * 1000);
+};
+
+const showAd = (video, episodeIndex) => {
+  video.pause();
+  showAdModal.value = true;
+  adShownForEpisode.value.add(episodeIndex);
+};
+
+const closeAdAndContinue = () => {
+  // Open ad URL in new tab
+  if (setting?.ads?.ad_url) {
+    window.open(setting.ads.ad_url, '_blank');
+  }
+  
+  showAdModal.value = false;
+  
+  const currentVideo = isMobile.value 
+    ? videoRefs.value[currentIndex.value]
+    : videoPlayer.value;
+    
+  if (currentVideo) {
+    currentVideo.play().catch(err => console.log('Play error:', err));
+  }
+};
+
+const setupDesktopAdListener = () => {
+  if (!videoPlayer.value || !setting?.ads?.active) return;
+  
+  const video = videoPlayer.value;
+  let adScheduled = false;
+
+  const checkAdTiming = () => {
+    if (adScheduled || adShownForEpisode.value.has(currentIndex.value)) return;
+    
+    const currentTime = video.currentTime;
+    const duration = video.duration || 120;
+    
+    const randomTime = Math.min(
+      Math.random() * 30 + 30,
+      duration * 0.7
+    );
+    
+    if (currentTime >= randomTime) {
+      adScheduled = true;
+      showAd(video, currentIndex.value);
+      video.removeEventListener('timeupdate', checkAdTiming);
+    }
+  };
+
+  video.addEventListener('timeupdate', checkAdTiming);
+};
 
 watch(currentIndex, (newIndex) => {
   pauseAllVideosExcept(newIndex);
@@ -459,7 +647,7 @@ onMounted(async () => {
         currentIndex.value = 0;
       }
       
-      if (isMobile.value && mobileContainer.value) {
+       if (isMobile.value && mobileContainer.value) {
         setTimeout(() => {
           mobileContainer.value.scrollTo({
             top: currentIndex.value * window.innerHeight,
@@ -467,18 +655,31 @@ onMounted(async () => {
           });
         }, 100);
       }
+      
+      // Setup ad for desktop initial load
+      if (!isMobile.value && videoPlayer.value) {
+        setTimeout(() => {
+          setupDesktopAdListener();
+        }, 1000);
+      }
     }
   } catch (error) {
     console.error('Error loading episodes:', error);
   }
   isLoading.value=false;
   
+  
 
 });
- // ✅ CLEANUP
-  onUnmounted(() => {
-    window.removeEventListener('resize', handleResize);
-  });
+onUnmounted(() => {
+  if (scrollTimeout.value) {
+    clearTimeout(scrollTimeout.value);
+  }
+  if (adTimeoutId.value) {
+    clearTimeout(adTimeoutId.value);
+  }
+  pauseAllVideosExcept(-1);
+});
   
 watch(() => props.episode, (newEpisode) => {
   if (newEpisode && episodes.value.length > 0) {

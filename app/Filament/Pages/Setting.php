@@ -62,7 +62,12 @@ class Setting extends Page implements HasForms
             Forms\Components\Repeater::make('meta_setting')->schema([
                 Forms\Components\TextInput::make('name'),
                 Forms\Components\TextInput::make('content')
-            ])->columns(2)
+            ])->columns(2),
+
+            Forms\Components\Section::make('Ads Setting')->schema([
+                Forms\Components\Toggle::make('ads.active')->label('Activate Ads?'),
+                Forms\Components\TextInput::make('ads.ad_url')->label('ADS URL')
+            ])
         ])->statePath('data');
     }
 

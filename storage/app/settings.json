@@ -6,6 +6,10 @@
     "site_description": "Nonton drama cina di dramabox,netshort dan lainnya",
     "icon": null,
     "logo": null,
+    "ads":{
+    "active":true,
+    "ad_url":"https://facebook.com"
+    },
     "sosmed": {
         "facebook_url": "https:\/\/facebook.com",
         "instagram_url": "#",
