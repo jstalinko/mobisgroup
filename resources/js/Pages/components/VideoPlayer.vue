@@ -127,9 +127,9 @@
       </div>
     </div>
 
-    <!-- Mobile View -->
+    <!-- Mobile View - TikTok Style (Only 3 Videos) -->
     <div class="lg:hidden relative h-screen overflow-hidden bg-black" v-if="isMobile">
-      <!-- 🔥 PERBAIKAN: Initial loading hanya untuk first load -->
+      <!-- Initial Loading -->
       <div v-if="isInitialLoading" class="absolute inset-0 flex items-center justify-center bg-black z-30">
         <div class="text-center">
           <span class="loading loading-spinner loading-lg text-primary"></span>
@@ -137,68 +137,76 @@
         </div>
       </div>
       
+      <!-- 🔥 OPTIMIZED: Only render 3 videos (prev, current, next) -->
       <div 
         ref="mobileContainer"
         class="snap-y snap-mandatory h-full overflow-y-scroll"
         @scroll="handleMobileScroll"
       >
         <div
-          v-for="(episode, index) in episodes"
-          :key="episode.id"
+          v-for="offset in [-1, 0, 1]"
+          :key="`video-slot-${offset}`"
           class="snap-start h-screen flex items-center justify-center relative"
         >
-          <!-- 🔥 PERBAIKAN: Loading per video lebih kecil dan transparan -->
-          <div 
-            v-if="loadingIndex.has(index) && index === currentIndex" 
-            class="absolute inset-0 flex items-center justify-center bg-transparent z-10 pointer-events-none"
-          >
-            <div class="bg-black/50 rounded-full p-4">
-              <span class="loading loading-spinner loading-md text-primary"></span>
+          <template v-if="getEpisodeAtOffset(offset)">
+            <!-- Loading Indicator -->
+            <div 
+              v-if="loadingIndex.has(currentIndex + offset)" 
+              class="absolute inset-0 flex items-center justify-center bg-transparent z-10 pointer-events-none"
+            >
+              <div class="bg-black/50 rounded-full p-4">
+                <span class="loading loading-spinner loading-md text-primary"></span>
+              </div>
             </div>
-          </div>
 
-          <!-- Floating Watermark Mobile -->
-          <div class="absolute top-4 right-4 text-white font-bold text-base opacity-70 pointer-events-none z-20 bg-black/30 px-3 py-1 rounded-lg backdrop-blur-sm">
-            {{ setting.site_name }}
-          </div>
+            <!-- Floating Watermark Mobile -->
+            <div class="absolute top-4 right-4 text-white font-bold text-base opacity-70 pointer-events-none z-20 bg-black/30 px-3 py-1 rounded-lg backdrop-blur-sm">
+              {{ setting.site_name }}
+            </div>
 
-          <!-- 🔥 PERBAIKAN: Tambah key untuk force re-render saat ganti quality -->
-          <video
-            v-if="shouldLoadVideo(index)"
-            :key="`video-${index}-${currentVideoUrl}`"
-            :ref="el => { if (el) videoRefs[index] = el }"
-            :src="nginxCacheVideo(index === currentIndex ? currentVideoUrl : getDefaultVideoUrl(episode), dramaDetail?.id, index+1, slugify(dramaDetail?.title))"
-            class="w-full h-full object-cover"
-            controls
-            playsinline
-            webkit-playsinline
-            x5-playsinline
-            x5-video-player-type="h5"
-            x5-video-player-fullscreen="true"
-            :preload="index === currentIndex ? 'auto' : 'none'"
-            @loadstart="handleVideoLoading(index)"
-            @loadeddata="handleVideoLoadedData(index)"
-            @canplay="handleVideoCanPlay(index)"
-            @playing="handleVideoPlaying(index)"
-            @waiting="handleVideoWaiting(index)"
-            @error="handleVideoError(index, $event)"
-            @ended="handleVideoEnded(index)"
-          ></video>
+            <!-- Video Element -->
+            <video
+              :ref="el => { if (el) videoRefs[currentIndex + offset] = el }"
+              :src="nginxCacheVideo(
+                offset === 0 ? currentVideoUrl : getDefaultVideoUrl(getEpisodeAtOffset(offset)), 
+                dramaDetail?.id, 
+                currentIndex + offset + 1, 
+                slugify(dramaDetail?.title)
+              )"
+              class="w-full h-full object-cover"
+              controls
+              playsinline
+              webkit-playsinline
+              x5-playsinline
+              x5-video-player-type="h5"
+              x5-video-player-fullscreen="true"
+              :preload="offset === 0 ? 'auto' : 'metadata'"
+              @loadstart="handleVideoLoading(currentIndex + offset)"
+              @loadeddata="handleVideoLoadedData(currentIndex + offset)"
+              @canplay="handleVideoCanPlay(currentIndex + offset)"
+              @playing="handleVideoPlaying(currentIndex + offset)"
+              @waiting="handleVideoWaiting(currentIndex + offset)"
+              @error="handleVideoError(currentIndex + offset, $event)"
+              @ended="handleVideoEnded(currentIndex + offset)"
+            ></video>
 
-          <!-- Placeholder untuk video yang belum load -->
+            <!-- Episode Info Overlay -->
+            <div class="absolute bottom-20 left-4 right-4 text-white z-10 pointer-events-none">
+              <h2 class="text-xl font-bold mb-1 drop-shadow-lg">
+                {{dramaDetail.title}} - {{ getEpisodeAtOffset(offset).title }}
+              </h2>
+            </div>
+          </template>
+          
+          <!-- Placeholder for boundary episodes -->
           <div 
             v-else 
             class="w-full h-full flex items-center justify-center bg-gray-900"
           >
             <div class="text-center text-white">
-              <span class="mdi mdi-play-circle-outline text-6xl mb-2"></span>
-              <p class="text-sm">Episode {{ index + 1 }}</p>
+              <span class="mdi mdi-alert-circle-outline text-6xl mb-2"></span>
+              <p class="text-sm">{{ offset < 0 ? 'Episode Pertama' : 'Episode Terakhir' }}</p>
             </div>
-          </div>
-
-          <!-- Episode Info Overlay -->
-          <div class="absolute bottom-20 left-4 right-4 text-white z-10 pointer-events-none">
-            <h2 class="text-xl font-bold mb-1 drop-shadow-lg">{{dramaDetail.title}} - {{ episode.title }}</h2>
           </div>
         </div>
       </div>
@@ -318,16 +326,24 @@ const isEpisodeDrawerOpen = ref(false);
 const isQualityDrawerOpen = ref(false);
 const scrollTimeout = ref(null);
 const isLoading = ref(true);
-const isInitialLoading = ref(true); // 🔥 BARU: Pisahkan initial loading
+const isInitialLoading = ref(true);
 const loadingIndex = ref(new Set()); 
 const isMobile = ref(false);
-const isScrolling = ref(false); // 🔥 BARU: Track scrolling state
 
 const showAdModal = ref(false);
 const adShownForEpisode = ref(new Set());
 const adTimeoutId = ref(null);
 
 const currentEpisode = computed(() => episodes.value[currentIndex.value]);
+
+// 🔥 NEW: Get episode at offset from current index
+const getEpisodeAtOffset = (offset) => {
+  const index = currentIndex.value + offset;
+  if (index >= 0 && index < episodes.value.length) {
+    return episodes.value[index];
+  }
+  return null;
+};
 
 const getDefaultVideoUrl = (episode) => {
   const defaultVideo = episode?.video_urls?.find(v => v.is_default);
@@ -356,16 +372,10 @@ const selectEpisode = (index) => {
   }
 };
 
-const shouldLoadVideo = (index) => {
-  return index === currentIndex.value;
-};
-
-// 🔥 PERBAIKAN: Better pause handling
 const pauseAllVideosExcept = (activeIndex) => {
   videoRefs.value.forEach((video, index) => {
     if (video && index !== activeIndex) {
       video.pause();
-      // Jangan reset currentTime untuk smooth transition
     }
   });
 };
@@ -378,22 +388,22 @@ const selectEpisodeMobile = (index) => {
   isEpisodeDrawerOpen.value = false;
   updateURL(index + 1);
   
+  // 🔥 OPTIMIZED: Always scroll to middle panel (index 1)
   const container = mobileContainer.value;
   if (container) {
-    isScrolling.value = true;
-    container.scrollTo({
-      top: index * window.innerHeight,
-      behavior: 'smooth'
+    nextTick(() => {
+      container.scrollTo({
+        top: window.innerHeight, // Middle panel
+        behavior: 'auto'
+      });
+      
+      setTimeout(() => {
+        const currentVideo = videoRefs.value[index];
+        if (currentVideo && currentVideo.readyState >= 3) {
+          currentVideo.play().catch(err => console.log('Play error:', err));
+        }
+      }, 200);
     });
-    
-    // 🔥 PERBAIKAN: Wait for scroll to finish
-    setTimeout(() => {
-      isScrolling.value = false;
-      const currentVideo = videoRefs.value[index];
-      if (currentVideo && currentVideo.readyState >= 3) {
-        currentVideo.play().catch(err => console.log('Play error:', err));
-      }
-    }, 600);
   }
 };
 
@@ -421,7 +431,6 @@ const changeQuality = (url) => {
   });
 };
 
-// 🔥 PERBAIKAN: Better quality change for mobile
 const changeQualityMobile = (url) => {
   const currentVideo = videoRefs.value[currentIndex.value];
   const currentTime = currentVideo?.currentTime || 0;
@@ -430,7 +439,6 @@ const changeQualityMobile = (url) => {
   currentVideoUrl.value = url;
   isQualityDrawerOpen.value = false;
   
-  // Force re-render dengan nextTick
   nextTick(() => {
     setTimeout(() => {
       const newVideo = videoRefs.value[currentIndex.value];
@@ -444,9 +452,8 @@ const changeQualityMobile = (url) => {
   });
 };
 
+// 🔥 OPTIMIZED: Better scroll handling for 3-video system
 const handleMobileScroll = (e) => {
-  isScrolling.value = true;
-  
   if (scrollTimeout.value) {
     clearTimeout(scrollTimeout.value);
   }
@@ -454,7 +461,14 @@ const handleMobileScroll = (e) => {
   scrollTimeout.value = setTimeout(() => {
     const container = e.target;
     const scrollTop = container.scrollTop;
-    const newIndex = Math.round(scrollTop / window.innerHeight);
+    const screenHeight = window.innerHeight;
+    
+    // Determine which video panel we're on (0 = prev, 1 = current, 2 = next)
+    const panelIndex = Math.round(scrollTop / screenHeight);
+    
+    // Calculate the actual episode index
+    const offset = panelIndex - 1; // -1, 0, or 1
+    const newIndex = currentIndex.value + offset;
     
     if (newIndex !== currentIndex.value && newIndex >= 0 && newIndex < episodes.value.length) {
       pauseAllVideosExcept(-1);
@@ -463,66 +477,58 @@ const handleMobileScroll = (e) => {
       currentVideoUrl.value = getDefaultVideoUrl(currentEpisode.value);
       updateURL(newIndex + 1);
       
+      // 🔥 CRITICAL: Reset scroll to middle panel
       nextTick(() => {
+        container.scrollTo({
+          top: screenHeight, // Always scroll to middle (index 1)
+          behavior: 'auto'
+        });
+        
         setTimeout(() => {
-          isScrolling.value = false;
-          const currentVideo = videoRefs.value[newIndex];
+          const currentVideo = videoRefs.value[currentIndex.value];
           if (currentVideo && currentVideo.readyState >= 3) {
             currentVideo.play().catch(err => console.log('Play error:', err));
           }
-        }, 200);
+        }, 100);
       });
-    } else {
-      isScrolling.value = false;
     }
   }, 150);
 };
 
-// 🔥 PERBAIKAN: Lebih detail event handling
 const handleVideoLoading = (index) => {
-  if (index === currentIndex.value) {
+  if (Math.abs(index - currentIndex.value) <= 1) {
     loadingIndex.value.add(index);
-    console.log(`Video ${index} loading started`);
   }
 };
 
 const handleVideoLoadedData = (index) => {
-  console.log(`Video ${index} data loaded`);
-  if (index === currentIndex.value) {
-    loadingIndex.value.delete(index);
-  }
+  loadingIndex.value.delete(index);
 };
 
 const handleVideoCanPlay = (index) => {
-  console.log(`Video ${index} can play`);
   loadingIndex.value.delete(index);
   
   if (index === currentIndex.value) {
     isInitialLoading.value = false;
     
-    // Auto-play jika bukan sedang scrolling
-    if (!isScrolling.value) {
-      const video = videoRefs.value[index];
-      if (video && video.paused) {
-        video.play().catch(err => console.log('Play prevented:', err));
-      }
-      
-      if (isMobile.value) {
-        scheduleAdForVideo(video, index);
-      }
+    const video = videoRefs.value[index];
+    if (video && video.paused) {
+      video.play().catch(err => console.log('Play prevented:', err));
+    }
+    
+    if (isMobile.value) {
+      scheduleAdForVideo(video, index);
     }
   }
 };
 
 const handleVideoPlaying = (index) => {
   loadingIndex.value.delete(index);
-  console.log(`Video ${index} is playing`);
 };
 
 const handleVideoWaiting = (index) => {
   if (index === currentIndex.value) {
     loadingIndex.value.add(index);
-    console.log(`Video ${index} is buffering`);
   }
 };
 
@@ -536,16 +542,15 @@ const handleVideoError = (index, event) => {
 };
 
 const handleVideoEnded = (index) => {
-  if (isMobile.value && index < episodes.value.length - 1) {
+  if (isMobile.value && index === currentIndex.value && index < episodes.value.length - 1) {
     setTimeout(() => {
       const container = mobileContainer.value;
       if (container) {
-        isScrolling.value = true;
+        // Scroll down to trigger next episode
         container.scrollTo({
-          top: (index + 1) * window.innerHeight,
+          top: window.innerHeight * 2, // Scroll to next panel
           behavior: 'smooth'
         });
-        setTimeout(() => isScrolling.value = false, 600);
       }
     }, 500);
   }
@@ -688,8 +693,9 @@ onMounted(async () => {
         await nextTick();
         setTimeout(() => {
           if (mobileContainer.value) {
+            // 🔥 OPTIMIZED: Always start at middle panel
             mobileContainer.value.scrollTo({
-              top: currentIndex.value * window.innerHeight,
+              top: window.innerHeight, // Middle panel (index 1)
               behavior: 'auto'
             });
           }
@@ -702,10 +708,8 @@ onMounted(async () => {
     console.error('Error loading video data:', error);
   } finally {
     isLoading.value = false;
-    // 🔥 PERBAIKAN: Fallback timeout untuk initial loading
     setTimeout(() => {
       if (isInitialLoading.value) {
-        console.log('Force clearing initial loading');
         isInitialLoading.value = false;
       }
     }, 5000);
@@ -759,7 +763,6 @@ onUnmounted(() => {
   transition: transform 0.3s ease-in-out;
 }
 
-/* Prevent iOS bounce */
 body {
   overscroll-behavior: none;
 }
