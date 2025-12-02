@@ -140,3 +140,12 @@ export async function getSearch(query)
     });
     
 }
+
+export async function logoutDevice(id)
+{
+    return await http(`/api/device/logout/${id}`);
+}
+export async function logoutAllDevice()
+{
+    return await http(`/api/device/logout-all`);
+}

@@ -14,7 +14,18 @@
         Silakan logout perangkat lain untuk melanjutkan.
       </div>
 
-      <h2 class="text-2xl font-bold mb-4">Perangkat Aktif</h2>
+      <!-- Header with Logout All Button -->
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Perangkat Aktif</h2>
+        
+        <button
+          v-if="devices.length > 0"
+          @click="logoutAllDevices"
+          class="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+        >
+          Logout Semua
+        </button>
+      </div>
 
       <!-- Devices List -->
       <div class="space-y-3">
@@ -34,7 +45,8 @@
 
           <button
             v-if="!device.revoked"
-            class="px-3 py-1 text-sm bg-green-500 text-white rounded-lg hover:bg-red-700"
+            @click="logoutDevice(device.device_id)"
+            class="px-3 py-1 text-sm bg-green-500 text-white rounded-lg hover:bg-red-700 transition"
           >
             Aktif
           </button>
@@ -56,6 +68,7 @@ import Navbar from './components/Navbar.vue'
 import Footer from './components/Footer.vue'
 import { router } from '@inertiajs/vue3'
 import MobileNav from './components/MobileNav.vue'
+import { logoutAllDevice } from '../utils/api'
 
 const props = defineProps({
   devices: Array,
@@ -63,11 +76,16 @@ const props = defineProps({
   limitReached: Boolean
 })
 
-const logoutDevice = (id) => {
-  router.post(`/devices/logout/${id}`, {}, {
-    preserveScroll: true,
-    onSuccess: () => console.log('Device logged out')
-  })
+const logoutDevice = async (id) => {
+  const resp = await logoutDevice(id);
+  window.location.href ='/login';
+}
+
+const logoutAllDevices =async () => {
+  if (confirm('Apakah Anda yakin ingin logout dari semua perangkat?')) {
+     const resp = await logoutAllDevice();
+  window.location.href ='/login';
+  }
 }
 
 const formatDate = (date) => {

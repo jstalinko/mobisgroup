@@ -41,3 +41,8 @@ Route::any('/payment-callback',function()
 {
     return response()->json(['success' => true],200,[],JSON_PRETTY_PRINT);
 });
+
+Route::group(['prefix' => '/device'],function(){
+    Route::get('/logout/{device_id}' , [AuthController::class,'logoutDevice']);
+    Route::get('/logout-all',[AuthController::class,'logoutAllDevice']);
+});

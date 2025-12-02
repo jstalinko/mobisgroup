@@ -142,4 +142,28 @@ class AuthController extends Controller
             'redirect' =>url('invoice/'.$order->invoice)
         ], 200);
     }
+
+    public function logoutAllDevice()
+    {
+        $user = auth()->user();
+         if(!$user)
+        {
+            UserDevice::where('revoked',false)->update(['revoked' => true]);
+        }else{
+        UserDevice::where('user_id',$user->id)->update(['revoked' => true]);
+        }
+        return response()->json(['success' => true]);
+
+    }
+    public function logoutDevice(Request $request)
+    {
+        $user = auth()->user();
+        if(!$user)
+        {
+            UserDevice::where('revoked',false)->update(['revoked' => true]);
+        }else{
+        $u = UserDevice::where('device_id',$request->device_id)->where('user_id',$user->id)->update(['revoked'=>true]);
+        }
+        return response()->json(['success' => true]);
+    }
 }
